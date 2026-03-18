@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Crypto Decision Terminal Final</title>
+  <title>Crypto Decision Terminal Final + Dominance</title>
   <style>
     :root{
       --bg:#071226;
@@ -154,6 +154,11 @@
       grid-template-columns:1fr 1fr;
       gap:12px;
     }
+    .split3{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:12px;
+    }
     .warnbox, .dangerbox, .infobox, .okbox{
       border-radius:18px;
       padding:12px;
@@ -175,6 +180,11 @@
       border:1px solid rgba(23,201,100,0.35);
       background:rgba(23,201,100,0.08);
     }
+    @media (max-width:880px){
+      .split3{
+        grid-template-columns:1fr;
+      }
+    }
     @media (max-width:640px){
       .split{
         grid-template-columns:1fr;
@@ -185,16 +195,16 @@
 <body>
   <div class="wrap">
     <h1>Crypto Decision Terminal</h1>
-    <div class="sub">BTC • ETH • SOL • XRP • 1m candles • строгое окно 30 минут</div>
+    <div class="sub">BTC • ETH • SOL • XRP • 1m candles • строгое окно 30 минут • BTC.D / USDT.D</div>
 
     <div class="toolbar">
       <button id="refreshBtn">Refresh</button>
       <button id="toggleBtn">Start</button>
       <select id="intervalSelect">
-        <option value="5000">5 sec</option>
         <option value="10000">10 sec</option>
-        <option value="15000">15 sec</option>
+        <option value="15000" selected>15 sec</option>
         <option value="30000">30 sec</option>
+        <option value="60000">60 sec</option>
       </select>
     </div>
 
@@ -210,6 +220,12 @@
     const SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT"];
     const LOOKBACK = 30;
 
+    const SETTINGS = {
+      DOMINANCE_REFRESH_MS: 60000,
+      USDT_DOM_NO_TRADE_DELTA: 0.08,   // процентных пункта от baseline
+      BTC_DOM_SPIKE_DELTA: 0.12        // процентных пункта от baseline
+    };
+
     const appStatus = document.getElementById("appStatus");
     const topCards = document.getElementById("topCards");
     const coinCards = document.getElementById("coinCards");
@@ -218,6 +234,12 @@
     const intervalSelect = document.getElementById("intervalSelect");
 
     let timer = null;
+
+    let dominanceCache = {
+      data: null,
+      lastFetchTs: 0,
+      baseline: null
+    };
 
     function modeClass(state, direction){
       if (state === "TREND") return direction === "UP" ? "up" : "down";
@@ -228,6 +250,13 @@
     function modeText(state, direction){
       if (state === "TREND") return `TREND ${direction}`;
       return state;
+    }
+
+    function formatArrow(delta){
+      if (delta == null) return "—";
+      if (delta > 0.0001) return "↑";
+      if (delta < -0.0001) return "↓";
+      return "→";
     }
 
     function classify(candles){
@@ -379,7 +408,65 @@
       return { text:"BTC FILTER: SKIP", cls:"skip", reason:"нет edge" };
     }
 
-    function marketGate(btc){
+    async function fetchDominanceData(){
+      const now = Date.now();
+
+      if (
+        dominanceCache.data &&
+        now - dominanceCache.lastFetchTs < SETTINGS.DOMINANCE_REFRESH_MS
+      ) {
+        return dominanceCache.data;
+      }
+
+      const [globalRes, tetherRes] = await Promise.all([
+        fetch("https://api.coingecko.com/api/v3/global", { cache: "no-store" }),
+        fetch("https://api.coingecko.com/api/v3/coins/tether?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false", { cache: "no-store" })
+      ]);
+
+      if (!globalRes.ok) throw new Error(`CoinGecko global: ${globalRes.status}`);
+      if (!tetherRes.ok) throw new Error(`CoinGecko tether: ${tetherRes.status}`);
+
+      const globalJson = await globalRes.json();
+      const tetherJson = await tetherRes.json();
+
+      const totalMcap = globalJson?.data?.total_market_cap?.usd;
+      const btcDom = globalJson?.data?.market_cap_percentage?.btc;
+      const usdtMcap = tetherJson?.market_data?.market_cap?.usd;
+
+      if (!totalMcap || !btcDom || !usdtMcap) {
+        throw new Error("не удалось получить dominance data");
+      }
+
+      const usdtDom = (usdtMcap / totalMcap) * 100;
+
+      if (!dominanceCache.baseline) {
+        dominanceCache.baseline = {
+          btcDom,
+          usdtDom,
+          ts: now
+        };
+      }
+
+      const btcDelta = btcDom - dominanceCache.baseline.btcDom;
+      const usdtDelta = usdtDom - dominanceCache.baseline.usdtDom;
+
+      const data = {
+        btcDom,
+        usdtDom,
+        btcDelta,
+        usdtDelta,
+        btcArrow: formatArrow(btcDelta),
+        usdtArrow: formatArrow(usdtDelta),
+        baselineTs: dominanceCache.baseline.ts
+      };
+
+      dominanceCache.data = data;
+      dominanceCache.lastFetchTs = now;
+
+      return data;
+    }
+
+    function marketGate(btc, dom){
       const reasons = [];
 
       if (btc.state === "CHAOS") reasons.push("BTC = CHAOS");
@@ -389,6 +476,15 @@
       if (btc.avgWickRatioRaw > 2.5) reasons.push("грязные свечи");
       if (btc.maxRun < 3) reasons.push("нет серии");
       if (btc.netMoveRaw < 0.0025) reasons.push("нет импульса");
+
+      if (dom) {
+        if (dom.usdtDelta >= SETTINGS.USDT_DOM_NO_TRADE_DELTA) {
+          reasons.push(`USDT.D растёт (${dom.usdtDelta.toFixed(2)} п.п.)`);
+        }
+        if (dom.btcDelta >= SETTINGS.BTC_DOM_SPIKE_DELTA) {
+          reasons.push(`BTC.D растёт (${dom.btcDelta.toFixed(2)} п.п.)`);
+        }
+      }
 
       if (reasons.length > 0){
         return {
@@ -405,7 +501,7 @@
       };
     }
 
-    function renderTop(btc, data, gate){
+    function renderTop(btc, data, gate, dom){
       const riskClass =
         btc.chaosRisk === "HIGH" ? "chaos" :
         btc.chaosRisk === "MEDIUM" ? "range" : "up";
@@ -430,6 +526,37 @@
 
       const gateBoxClass = gate.cls === "allow" ? "okbox" : "dangerbox";
 
+      const domBox = dom ? `
+        <div class="split3" style="margin-top:12px;">
+          <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
+            <div class="label">BTC.D</div>
+            <div class="big ${dom.btcDelta > 0 ? "range" : dom.btcDelta < 0 ? "up" : "caution"}" style="margin-top:6px;">
+              ${dom.btcDom.toFixed(2)}% ${dom.btcArrow}
+            </div>
+            <div class="mini">session delta: ${dom.btcDelta.toFixed(2)} п.п.</div>
+          </div>
+          <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
+            <div class="label">USDT.D</div>
+            <div class="big ${dom.usdtDelta > 0 ? "chaos" : dom.usdtDelta < 0 ? "up" : "caution"}" style="margin-top:6px;">
+              ${dom.usdtDom.toFixed(2)}% ${dom.usdtArrow}
+            </div>
+            <div class="mini">session delta: ${dom.usdtDelta.toFixed(2)} п.п.</div>
+          </div>
+          <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
+            <div class="label">Dominance logic</div>
+            <div class="mini">
+              BTC.D ↑ = альты слабее<br/>
+              USDT.D ↑ = risk-off / деньги в кэш
+            </div>
+          </div>
+        </div>
+      ` : `
+        <div class="warnbox">
+          <div class="label">Dominance data</div>
+          <div class="mini">ещё не загружено</div>
+        </div>
+      `;
+
       topCards.innerHTML = `
         <div class="card">
           <div class="headline">
@@ -448,11 +575,16 @@
             <div class="mini">${gate.reason}</div>
           </div>
 
+          ${domBox}
+
           <div class="split" style="margin-top:12px">
             <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
               <div class="label">BTC как глобальный фильтр</div>
               <div class="big ${generalClass}" style="margin-top:6px;">${general}</div>
-              <div class="mini">net move: ${btc.netMovePct}% · run: ${btc.maxRun} · changes: ${btc.changes} · dominance: ${btc.dominantShare}% · wick/body: ${btc.avgWickRatio}</div>
+              <div class="mini">
+                net move: ${btc.netMovePct}% · run: ${btc.maxRun} · changes: ${btc.changes} ·
+                dominance: ${btc.dominantShare}% · wick/body: ${btc.avgWickRatio}
+              </div>
             </div>
             <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
               <div class="label">Отдельно по монетам</div>
@@ -539,9 +671,13 @@
     async function refreshAll(){
       appStatus.textContent = "Loading...";
       try{
-        const data = await Promise.all(SYMBOLS.map(loadOne));
+        const [data, dom] = await Promise.all([
+          Promise.all(SYMBOLS.map(loadOne)),
+          fetchDominanceData().catch(() => null)
+        ]);
+
         const btc = data.find(x => x.symbol === "BTCUSDT");
-        const gate = marketGate(btc);
+        const gate = marketGate(btc, dom);
 
         data.forEach(x => {
           x.local = localDecision(x);
@@ -550,8 +686,9 @@
             : btcAwareDecision(btc, x);
         });
 
-        renderTop(btc, data, gate);
+        renderTop(btc, data, gate, dom);
         renderCoins(data);
+
         appStatus.textContent = `Updated ${new Date().toLocaleTimeString()} · window ${LOOKBACK}m`;
       } catch (e){
         appStatus.textContent = `Ошибка загрузки: ${e.message}`;
