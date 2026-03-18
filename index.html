@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Crypto Decision Terminal Final + Dominance</title>
+  <title>Crypto Chaos Terminal</title>
   <style>
     :root{
       --bg:#071226;
@@ -25,10 +25,7 @@
       color:var(--text);
       padding:18px 14px 28px;
     }
-    .wrap{
-      max-width:980px;
-      margin:0 auto;
-    }
+    .wrap{max-width:980px;margin:0 auto}
     h1{
       margin:8px 0 6px;
       font-size:34px;
@@ -116,7 +113,12 @@
       margin-top:6px;
     }
     .gate{
-      font-size:28px;
+      font-size:30px;
+      font-weight:900;
+      margin-top:6px;
+    }
+    .chaosLevel{
+      font-size:30px;
       font-weight:900;
       margin-top:6px;
     }
@@ -181,21 +183,17 @@
       background:rgba(23,201,100,0.08);
     }
     @media (max-width:880px){
-      .split3{
-        grid-template-columns:1fr;
-      }
+      .split3{grid-template-columns:1fr}
     }
     @media (max-width:640px){
-      .split{
-        grid-template-columns:1fr;
-      }
+      .split{grid-template-columns:1fr}
     }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Crypto Decision Terminal</h1>
-    <div class="sub">BTC • ETH • SOL • XRP • 1m candles • строгое окно 30 минут • BTC.D / USDT.D</div>
+    <h1>Crypto Chaos Terminal</h1>
+    <div class="sub">BTC • ETH • SOL • XRP • 1m candles • окно 30 минут • BTC.D / USDT.D</div>
 
     <div class="toolbar">
       <button id="refreshBtn">Refresh</button>
@@ -222,8 +220,10 @@
 
     const SETTINGS = {
       DOMINANCE_REFRESH_MS: 60000,
-      USDT_DOM_NO_TRADE_DELTA: 0.08,   // процентных пункта от baseline
-      BTC_DOM_SPIKE_DELTA: 0.12        // процентных пункта от baseline
+      USDT_DOM_MEDIUM_DELTA: 0.05,
+      USDT_DOM_HIGH_DELTA: 0.10,
+      BTC_DOM_MEDIUM_DELTA: 0.08,
+      BTC_DOM_HIGH_DELTA: 0.15
     };
 
     const appStatus = document.getElementById("appStatus");
@@ -252,6 +252,10 @@
       return state;
     }
 
+    function clamp(value, min, max){
+      return Math.max(min, Math.min(max, value));
+    }
+
     function formatArrow(delta){
       if (delta == null) return "—";
       if (delta > 0.0001) return "↑";
@@ -274,7 +278,10 @@
         const body = Math.abs(cl - o);
         const totalRange = h - l;
         const wick = Math.max(0, totalRange - body);
-        wickRatios.push(body > 0 ? wick / body : 99);
+
+        let ratio = body > 0 ? wick / body : 10;
+        ratio = Math.min(ratio, 10);
+        wickRatios.push(ratio);
 
         opens.push(o);
         closes.push(cl);
@@ -287,7 +294,7 @@
       let maxRun = 1;
       let curRun = 1;
       for (let i = 1; i < dirs.length; i++){
-        if (dirs[i] !== 0 && dirs[i] === dirs[i-1]){
+        if (dirs[i] !== 0 && dirs[i] === dirs[i - 1]){
           curRun++;
           maxRun = Math.max(maxRun, curRun);
         } else {
@@ -411,10 +418,7 @@
     async function fetchDominanceData(){
       const now = Date.now();
 
-      if (
-        dominanceCache.data &&
-        now - dominanceCache.lastFetchTs < SETTINGS.DOMINANCE_REFRESH_MS
-      ) {
+      if (dominanceCache.data && now - dominanceCache.lastFetchTs < SETTINGS.DOMINANCE_REFRESH_MS) {
         return dominanceCache.data;
       }
 
@@ -466,57 +470,155 @@
       return data;
     }
 
-    function marketGate(btc, dom){
-      const reasons = [];
-
-      if (btc.state === "CHAOS") reasons.push("BTC = CHAOS");
-      if (btc.chaosRisk === "HIGH") reasons.push("BTC chaos risk = HIGH");
-      if (btc.changes > btc.window * 0.45) reasons.push("слишком много разворотов");
-      if (btc.dominantShareRaw < 0.60) reasons.push("нет доминирования");
-      if (btc.avgWickRatioRaw > 2.5) reasons.push("грязные свечи");
-      if (btc.maxRun < 3) reasons.push("нет серии");
-      if (btc.netMoveRaw < 0.0025) reasons.push("нет импульса");
-
-      if (dom) {
-        if (dom.usdtDelta >= SETTINGS.USDT_DOM_NO_TRADE_DELTA) {
-          reasons.push(`USDT.D растёт (${dom.usdtDelta.toFixed(2)} п.п.)`);
-        }
-        if (dom.btcDelta >= SETTINGS.BTC_DOM_SPIKE_DELTA) {
-          reasons.push(`BTC.D растёт (${dom.btcDelta.toFixed(2)} п.п.)`);
-        }
-      }
-
-      if (reasons.length > 0){
+    function computeEventRisk(dom){
+      if (!dom) {
         return {
-          text: "NO TRADE",
-          cls: "skip",
-          reason: reasons.join(" · ")
+          level: "UNKNOWN",
+          cls: "caution",
+          score: 30,
+          reasons: ["нет dominance data"]
         };
       }
 
+      const reasons = [];
+      let score = 0;
+
+      if (dom.usdtDelta >= SETTINGS.USDT_DOM_HIGH_DELTA) {
+        score += 45;
+        reasons.push(`USDT.D сильно растёт (${dom.usdtDelta.toFixed(2)} п.п.)`);
+      } else if (dom.usdtDelta >= SETTINGS.USDT_DOM_MEDIUM_DELTA) {
+        score += 25;
+        reasons.push(`USDT.D растёт (${dom.usdtDelta.toFixed(2)} п.п.)`);
+      }
+
+      if (dom.btcDelta >= SETTINGS.BTC_DOM_HIGH_DELTA) {
+        score += 30;
+        reasons.push(`BTC.D сильно растёт (${dom.btcDelta.toFixed(2)} п.п.)`);
+      } else if (dom.btcDelta >= SETTINGS.BTC_DOM_MEDIUM_DELTA) {
+        score += 15;
+        reasons.push(`BTC.D растёт (${dom.btcDelta.toFixed(2)} п.п.)`);
+      }
+
+      if (score >= 50) {
+        return { level: "HIGH", cls: "skip", score, reasons };
+      }
+      if (score >= 20) {
+        return { level: "MEDIUM", cls: "caution", score, reasons };
+      }
       return {
-        text: "TRADE",
+        level: "LOW",
         cls: "allow",
-        reason: "рынок достаточно чистый для запуска cbit"
+        score,
+        reasons: reasons.length ? reasons : ["dominance спокойная"]
       };
     }
 
-    function renderTop(btc, data, gate, dom){
-      const riskClass =
-        btc.chaosRisk === "HIGH" ? "chaos" :
-        btc.chaosRisk === "MEDIUM" ? "range" : "up";
+    function computeTechnicalChaos(btc){
+      let score = 0;
+      const reasons = [];
 
-      let general = "BTC = RANGE → осторожно";
-      let generalClass = "range";
-
-      if (btc.state === "CHAOS"){
-        general = "BTC = CHAOS → не входить";
-        generalClass = "chaos";
-      } else if (btc.state === "TREND"){
-        general = `BTC = TREND ${btc.direction} → проверяй совпадение`;
-        generalClass = btc.direction === "UP" ? "up" : "down";
+      if (btc.state === "CHAOS") {
+        score += 40;
+        reasons.push("BTC = CHAOS");
+      }
+      if (btc.chaosRisk === "HIGH") {
+        score += 30;
+        reasons.push("BTC chaos risk = HIGH");
+      } else if (btc.chaosRisk === "MEDIUM") {
+        score += 15;
+        reasons.push("BTC chaos risk = MEDIUM");
       }
 
+      if (btc.changes > btc.window * 0.45) {
+        score += 20;
+        reasons.push("слишком много разворотов");
+      } else if (btc.changes > btc.window * 0.35) {
+        score += 10;
+        reasons.push("разворотов выше нормы");
+      }
+
+      if (btc.dominantShareRaw < 0.58) {
+        score += 20;
+        reasons.push("нет доминирования");
+      } else if (btc.dominantShareRaw < 0.62) {
+        score += 10;
+        reasons.push("слабое доминирование");
+      }
+
+      if (btc.avgWickRatioRaw > 2.5) {
+        score += 20;
+        reasons.push("грязные свечи");
+      } else if (btc.avgWickRatioRaw > 1.8) {
+        score += 10;
+        reasons.push("тени выше нормы");
+      }
+
+      if (btc.maxRun < 3) {
+        score += 15;
+        reasons.push("нет серии");
+      }
+
+      if (btc.netMoveRaw < 0.0025) {
+        score += 15;
+        reasons.push("нет импульса");
+      }
+
+      score = clamp(score, 0, 100);
+
+      let level = "LOW";
+      let cls = "allow";
+      if (score >= 60) {
+        level = "HIGH";
+        cls = "skip";
+      } else if (score >= 30) {
+        level = "MEDIUM";
+        cls = "caution";
+      }
+
+      return { level, cls, score, reasons };
+    }
+
+    function computeFinalChaos(technical, eventRisk){
+      const reasons = [...technical.reasons, ...eventRisk.reasons];
+      const score = clamp(Math.max(technical.score, eventRisk.score), 0, 100);
+
+      let level = "LOW";
+      let cls = "allow";
+
+      if (technical.level === "HIGH" || eventRisk.level === "HIGH" || score >= 60) {
+        level = "HIGH";
+        cls = "skip";
+      } else if (technical.level === "MEDIUM" || eventRisk.level === "MEDIUM" || score >= 30) {
+        level = "MEDIUM";
+        cls = "caution";
+      }
+
+      return { level, cls, score, reasons };
+    }
+
+    function marketGate(finalChaos){
+      if (finalChaos.level === "HIGH") {
+        return {
+          text: "DO NOT START",
+          cls: "skip",
+          reason: finalChaos.reasons.join(" · ")
+        };
+      }
+      if (finalChaos.level === "MEDIUM") {
+        return {
+          text: "CAUTION",
+          cls: "caution",
+          reason: finalChaos.reasons.join(" · ")
+        };
+      }
+      return {
+        text: "START OK",
+        cls: "allow",
+        reason: "хаос низкий, рынок достаточно чистый"
+      };
+    }
+
+    function renderTop(btc, data, dom, technical, eventRisk, finalChaos, gate){
       const localTradable = data.filter(
         x => x.symbol !== "BTCUSDT" && x.local.text.startsWith("LOCAL ALLOW")
       );
@@ -524,38 +626,9 @@
         x => x.symbol !== "BTCUSDT" && x.btcAware.text.startsWith("BTC FILTER: ALLOW")
       );
 
-      const gateBoxClass = gate.cls === "allow" ? "okbox" : "dangerbox";
-
-      const domBox = dom ? `
-        <div class="split3" style="margin-top:12px;">
-          <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
-            <div class="label">BTC.D</div>
-            <div class="big ${dom.btcDelta > 0 ? "range" : dom.btcDelta < 0 ? "up" : "caution"}" style="margin-top:6px;">
-              ${dom.btcDom.toFixed(2)}% ${dom.btcArrow}
-            </div>
-            <div class="mini">session delta: ${dom.btcDelta.toFixed(2)} п.п.</div>
-          </div>
-          <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
-            <div class="label">USDT.D</div>
-            <div class="big ${dom.usdtDelta > 0 ? "chaos" : dom.usdtDelta < 0 ? "up" : "caution"}" style="margin-top:6px;">
-              ${dom.usdtDom.toFixed(2)}% ${dom.usdtArrow}
-            </div>
-            <div class="mini">session delta: ${dom.usdtDelta.toFixed(2)} п.п.</div>
-          </div>
-          <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
-            <div class="label">Dominance logic</div>
-            <div class="mini">
-              BTC.D ↑ = альты слабее<br/>
-              USDT.D ↑ = risk-off / деньги в кэш
-            </div>
-          </div>
-        </div>
-      ` : `
-        <div class="warnbox">
-          <div class="label">Dominance data</div>
-          <div class="mini">ещё не загружено</div>
-        </div>
-      `;
+      const gateBoxClass =
+        gate.cls === "allow" ? "okbox" :
+        gate.cls === "caution" ? "warnbox" : "dangerbox";
 
       topCards.innerHTML = `
         <div class="card">
@@ -565,8 +638,8 @@
               <div class="gate ${gate.cls}">${gate.text}</div>
             </div>
             <div style="text-align:right">
-              <div class="label">Chaos risk BTC</div>
-              <div class="big ${riskClass}">${btc.chaosRisk}</div>
+              <div class="label">Итоговый уровень хаоса</div>
+              <div class="chaosLevel ${finalChaos.cls}">${finalChaos.level}</div>
             </div>
           </div>
 
@@ -575,17 +648,65 @@
             <div class="mini">${gate.reason}</div>
           </div>
 
-          ${domBox}
+          <div class="split3" style="margin-top:12px;">
+            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
+              <div class="label">Technical chaos</div>
+              <div class="big ${technical.cls}" style="margin-top:6px;">${technical.level}</div>
+              <div class="mini">score: ${technical.score}/100</div>
+              <div class="mini">${technical.reasons.length ? technical.reasons.join(" · ") : "структура чистая"}</div>
+            </div>
+
+            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
+              <div class="label">Event risk</div>
+              <div class="big ${eventRisk.cls}" style="margin-top:6px;">${eventRisk.level}</div>
+              <div class="mini">score: ${eventRisk.score}/100</div>
+              <div class="mini">${eventRisk.reasons.length ? eventRisk.reasons.join(" · ") : "внешний фон спокойный"}</div>
+            </div>
+
+            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
+              <div class="label">Final chaos</div>
+              <div class="big ${finalChaos.cls}" style="margin-top:6px;">${finalChaos.level}</div>
+              <div class="mini">score: ${finalChaos.score}/100</div>
+              <div class="mini">используй это как главный индикатор запуска cbit</div>
+            </div>
+          </div>
+
+          <div class="split3" style="margin-top:12px;">
+            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
+              <div class="label">BTC.D</div>
+              <div class="big ${dom && dom.btcDelta > 0 ? "range" : dom && dom.btcDelta < 0 ? "up" : "caution"}" style="margin-top:6px;">
+                ${dom ? `${dom.btcDom.toFixed(2)}% ${dom.btcArrow}` : "—"}
+              </div>
+              <div class="mini">${dom ? `session delta: ${dom.btcDelta.toFixed(2)} п.п.` : "нет данных"}</div>
+            </div>
+
+            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
+              <div class="label">USDT.D</div>
+              <div class="big ${dom && dom.usdtDelta > 0 ? "chaos" : dom && dom.usdtDelta < 0 ? "up" : "caution"}" style="margin-top:6px;">
+                ${dom ? `${dom.usdtDom.toFixed(2)}% ${dom.usdtArrow}` : "—"}
+              </div>
+              <div class="mini">${dom ? `session delta: ${dom.usdtDelta.toFixed(2)} п.п.` : "нет данных"}</div>
+            </div>
+
+            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
+              <div class="label">Dominance logic</div>
+              <div class="mini">
+                BTC.D ↑ = альты слабее<br/>
+                USDT.D ↑ = risk-off / деньги в кэш
+              </div>
+            </div>
+          </div>
 
           <div class="split" style="margin-top:12px">
             <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
               <div class="label">BTC как глобальный фильтр</div>
-              <div class="big ${generalClass}" style="margin-top:6px;">${general}</div>
+              <div class="big ${modeClass(btc.state, btc.direction)}" style="margin-top:6px;">${modeText(btc.state, btc.direction)}</div>
               <div class="mini">
                 net move: ${btc.netMovePct}% · run: ${btc.maxRun} · changes: ${btc.changes} ·
                 dominance: ${btc.dominantShare}% · wick/body: ${btc.avgWickRatio}
               </div>
             </div>
+
             <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
               <div class="label">Отдельно по монетам</div>
               <div class="mini">${localTradable.length ? localTradable.map(x => x.symbol.replace("USDT","")).join(", ") : "нет явных локальных трендов"}</div>
@@ -677,7 +798,6 @@
         ]);
 
         const btc = data.find(x => x.symbol === "BTCUSDT");
-        const gate = marketGate(btc, dom);
 
         data.forEach(x => {
           x.local = localDecision(x);
@@ -686,7 +806,12 @@
             : btcAwareDecision(btc, x);
         });
 
-        renderTop(btc, data, gate, dom);
+        const technical = computeTechnicalChaos(btc);
+        const eventRisk = computeEventRisk(dom);
+        const finalChaos = computeFinalChaos(technical, eventRisk);
+        const gate = marketGate(finalChaos);
+
+        renderTop(btc, data, dom, technical, eventRisk, finalChaos, gate);
         renderCoins(data);
 
         appStatus.textContent = `Updated ${new Date().toLocaleTimeString()} · window ${LOOKBACK}m`;
