@@ -3,43 +3,183 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Crypto Decision Terminal v4</title>
+  <title>Crypto Decision Terminal Final</title>
   <style>
     :root{
-      --bg:#071226; --panel:#0f1d3a; --panel2:#16264b; --text:#eaf0ff; --muted:#9fb0d9;
-      --ok:#17c964; --warn:#f5a524; --bad:#f31260; --border:#243b73; --btn:#79aaff;
+      --bg:#071226;
+      --panel:#0f1d3a;
+      --panel2:#16264b;
+      --text:#eaf0ff;
+      --muted:#9fb0d9;
+      --ok:#17c964;
+      --warn:#f5a524;
+      --bad:#f31260;
+      --border:#243b73;
+      --btn:#79aaff;
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:linear-gradient(180deg,#06101f 0%, #0a1831 100%);color:var(--text);padding:18px 14px 28px}
-    .wrap{max-width:980px;margin:0 auto}
-    h1{margin:8px 0 6px;font-size:34px;line-height:1.04;font-weight:800;letter-spacing:-0.03em}
-    .sub{color:var(--muted);font-size:18px;margin-bottom:16px}
-    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-    button, select{border:none;border-radius:16px;padding:14px 16px;font-size:18px;font-weight:700}
-    button{background:var(--btn);color:#081427;min-width:120px}
-    select{background:var(--panel2);color:var(--text);border:1px solid var(--border)}
-    .status{font-size:16px;color:var(--muted);margin:4px 0 14px}
-    .sectionTitle{font-size:20px;font-weight:800;margin:18px 0 10px}
-    .topgrid,.grid{display:grid;grid-template-columns:1fr;gap:12px}
-    .card{background:rgba(15,29,58,0.95);border:1px solid var(--border);border-radius:22px;padding:16px;box-shadow:0 10px 25px rgba(0,0,0,0.16)}
-    .headline{display:flex;justify-content:space-between;align-items:center;gap:10px}
-    .coin{font-size:26px;font-weight:800}
-    .price{font-size:20px;font-weight:700}
-    .mode{font-size:22px;font-weight:800;margin-top:10px}
-    .decision{font-size:20px;font-weight:800;margin-top:8px}
-    .localDecision{font-size:18px;font-weight:800;margin-top:6px}
-    .up{color:var(--ok)} .down{color:var(--bad)} .range{color:var(--warn)} .chaos{color:var(--bad)}
-    .allow{color:var(--ok)} .caution{color:var(--warn)} .skip{color:var(--bad)}
-    .meta{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin-top:10px}
-    .label{color:var(--muted);font-size:14px}
-    .big{font-size:24px;font-weight:800}
-    .mini{font-size:15px;color:var(--muted);margin-top:8px;line-height:1.4}
-    .split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .warnbox,.dangerbox,.infobox{border-radius:18px;padding:12px;margin-top:10px}
-    .warnbox{border:1px solid rgba(245,165,36,0.35);background:rgba(245,165,36,0.08)}
-    .dangerbox{border:1px solid rgba(243,18,96,0.35);background:rgba(243,18,96,0.08)}
-    .infobox{border:1px solid rgba(121,170,255,0.35);background:rgba(121,170,255,0.08)}
-    @media (max-width:640px){ .split{grid-template-columns:1fr} }
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      background:linear-gradient(180deg,#06101f 0%, #0a1831 100%);
+      color:var(--text);
+      padding:18px 14px 28px;
+    }
+    .wrap{
+      max-width:980px;
+      margin:0 auto;
+    }
+    h1{
+      margin:8px 0 6px;
+      font-size:34px;
+      line-height:1.04;
+      font-weight:800;
+      letter-spacing:-0.03em;
+    }
+    .sub{
+      color:var(--muted);
+      font-size:18px;
+      margin-bottom:16px;
+    }
+    .toolbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    button, select{
+      border:none;
+      border-radius:16px;
+      padding:14px 16px;
+      font-size:18px;
+      font-weight:700;
+    }
+    button{
+      background:var(--btn);
+      color:#081427;
+      min-width:120px;
+    }
+    select{
+      background:var(--panel2);
+      color:var(--text);
+      border:1px solid var(--border);
+    }
+    .status{
+      font-size:16px;
+      color:var(--muted);
+      margin:4px 0 14px;
+    }
+    .sectionTitle{
+      font-size:20px;
+      font-weight:800;
+      margin:18px 0 10px;
+    }
+    .topgrid, .grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:12px;
+    }
+    .card{
+      background:rgba(15,29,58,0.95);
+      border:1px solid var(--border);
+      border-radius:22px;
+      padding:16px;
+      box-shadow:0 10px 25px rgba(0,0,0,0.16);
+    }
+    .headline{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .coin{
+      font-size:26px;
+      font-weight:800;
+    }
+    .price{
+      font-size:20px;
+      font-weight:700;
+    }
+    .mode{
+      font-size:22px;
+      font-weight:800;
+      margin-top:10px;
+    }
+    .decision{
+      font-size:20px;
+      font-weight:800;
+      margin-top:8px;
+    }
+    .localDecision{
+      font-size:18px;
+      font-weight:800;
+      margin-top:6px;
+    }
+    .gate{
+      font-size:28px;
+      font-weight:900;
+      margin-top:6px;
+    }
+    .up{color:var(--ok)}
+    .down{color:var(--bad)}
+    .range{color:var(--warn)}
+    .chaos{color:var(--bad)}
+    .allow{color:var(--ok)}
+    .caution{color:var(--warn)}
+    .skip{color:var(--bad)}
+    .meta{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      color:var(--muted);
+      font-size:14px;
+      margin-top:10px;
+    }
+    .label{
+      color:var(--muted);
+      font-size:14px;
+    }
+    .big{
+      font-size:24px;
+      font-weight:800;
+    }
+    .mini{
+      font-size:15px;
+      color:var(--muted);
+      margin-top:8px;
+      line-height:1.4;
+    }
+    .split{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+    .warnbox, .dangerbox, .infobox, .okbox{
+      border-radius:18px;
+      padding:12px;
+      margin-top:10px;
+    }
+    .warnbox{
+      border:1px solid rgba(245,165,36,0.35);
+      background:rgba(245,165,36,0.08);
+    }
+    .dangerbox{
+      border:1px solid rgba(243,18,96,0.35);
+      background:rgba(243,18,96,0.08);
+    }
+    .infobox{
+      border:1px solid rgba(121,170,255,0.35);
+      background:rgba(121,170,255,0.08);
+    }
+    .okbox{
+      border:1px solid rgba(23,201,100,0.35);
+      background:rgba(23,201,100,0.08);
+    }
+    @media (max-width:640px){
+      .split{
+        grid-template-columns:1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -59,6 +199,7 @@
     </div>
 
     <div id="appStatus" class="status">Stopped</div>
+
     <div class="topgrid" id="topCards"></div>
 
     <div class="sectionTitle">BTC filter + монеты</div>
@@ -68,12 +209,14 @@
   <script>
     const SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT"];
     const LOOKBACK = 30;
+
     const appStatus = document.getElementById("appStatus");
     const topCards = document.getElementById("topCards");
     const coinCards = document.getElementById("coinCards");
     const refreshBtn = document.getElementById("refreshBtn");
     const toggleBtn = document.getElementById("toggleBtn");
     const intervalSelect = document.getElementById("intervalSelect");
+
     let timer = null;
 
     function modeClass(state, direction){
@@ -94,7 +237,11 @@
       const wickRatios = [];
 
       for (const c of candles){
-        const o = Number(c[1]), h = Number(c[2]), l = Number(c[3]), cl = Number(c[4]);
+        const o = Number(c[1]);
+        const h = Number(c[2]);
+        const l = Number(c[3]);
+        const cl = Number(c[4]);
+
         const body = Math.abs(cl - o);
         const totalRange = h - l;
         const wick = Math.max(0, totalRange - body);
@@ -108,7 +255,8 @@
         else dirs.push(0);
       }
 
-      let maxRun = 1, curRun = 1;
+      let maxRun = 1;
+      let curRun = 1;
       for (let i = 1; i < dirs.length; i++){
         if (dirs[i] !== 0 && dirs[i] === dirs[i-1]){
           curRun++;
@@ -118,11 +266,15 @@
         }
       }
 
-      let changes = 0, prev = null;
-      let upCount = 0, downCount = 0;
+      let changes = 0;
+      let prev = null;
+      let upCount = 0;
+      let downCount = 0;
+
       for (const d of dirs){
         if (d === 1) upCount++;
         else if (d === -1) downCount++;
+
         if (d === 0) continue;
         if (prev !== null && d !== prev) changes++;
         prev = d;
@@ -169,124 +321,214 @@
       else if (predictorSignals.length >= 2) chaosRisk = "MEDIUM";
 
       return {
-        state, direction, price:lastClose,
-        maxRun, changes,
-        netMovePct:(netMove * 100).toFixed(3),
-        avgWickRatio:avgWickRatio.toFixed(2),
-        dominantShare:(dominantShare * 100).toFixed(0),
-        chaosRisk, predictorSignals
+        state,
+        direction,
+        price: lastClose,
+        maxRun,
+        changes,
+        netMovePct: (netMove * 100).toFixed(3),
+        netMoveRaw: netMove,
+        avgWickRatio: avgWickRatio.toFixed(2),
+        avgWickRatioRaw: avgWickRatio,
+        dominantShare: (dominantShare * 100).toFixed(0),
+        dominantShareRaw: dominantShare,
+        chaosRisk,
+        predictorSignals,
+        window: n
       };
     }
 
     function localDecision(coin){
-      if (coin.state === "CHAOS") return {text:"LOCAL SKIP", cls:"skip", reason:"сама монета в хаосе"};
-      if (coin.chaosRisk === "HIGH") return {text:"LOCAL SKIP", cls:"skip", reason:"у монеты высокий риск хаоса"};
-      if (coin.state === "TREND") return {text:`LOCAL ALLOW ${coin.direction}`, cls:"allow", reason:"сама монета даёт тренд"};
-      if (coin.state === "RANGE" && coin.chaosRisk === "LOW") return {text:"LOCAL CAUTION", cls:"caution", reason:"монета в range без сильной деградации"};
-      return {text:"LOCAL SKIP", cls:"skip", reason:"локально edge слабый"};
+      if (coin.state === "CHAOS") {
+        return { text:"LOCAL SKIP", cls:"skip", reason:"сама монета в хаосе" };
+      }
+      if (coin.chaosRisk === "HIGH") {
+        return { text:"LOCAL SKIP", cls:"skip", reason:"у монеты высокий риск хаоса" };
+      }
+      if (coin.state === "TREND") {
+        return { text:`LOCAL ALLOW ${coin.direction}`, cls:"allow", reason:"сама монета даёт тренд" };
+      }
+      if (coin.state === "RANGE" && coin.chaosRisk === "LOW") {
+        return { text:"LOCAL CAUTION", cls:"caution", reason:"монета в range без сильной деградации" };
+      }
+      return { text:"LOCAL SKIP", cls:"skip", reason:"локально edge слабый" };
     }
 
     function btcAwareDecision(btc, coin){
-      if (btc.state === "CHAOS") return {text:"BTC FILTER: SKIP", cls:"skip", reason:"BTC в хаосе"};
-      if (btc.chaosRisk === "HIGH") return {text:"BTC FILTER: SKIP", cls:"skip", reason:"BTC близок к хаосу"};
-      if (coin.state === "CHAOS") return {text:"BTC FILTER: SKIP", cls:"skip", reason:"монета в хаосе"};
-      if (coin.chaosRisk === "HIGH") return {text:"BTC FILTER: SKIP", cls:"skip", reason:"монета деградирует"};
+      if (btc.state === "CHAOS") {
+        return { text:"BTC FILTER: SKIP", cls:"skip", reason:"BTC в хаосе" };
+      }
+      if (btc.chaosRisk === "HIGH") {
+        return { text:"BTC FILTER: SKIP", cls:"skip", reason:"BTC близок к хаосу" };
+      }
+      if (coin.state === "CHAOS") {
+        return { text:"BTC FILTER: SKIP", cls:"skip", reason:"монета в хаосе" };
+      }
+      if (coin.chaosRisk === "HIGH") {
+        return { text:"BTC FILTER: SKIP", cls:"skip", reason:"монета деградирует" };
+      }
       if (btc.state === "TREND" && coin.state === "TREND" && btc.direction === coin.direction) {
-        return {text:`BTC FILTER: ALLOW ${coin.direction}`, cls:"allow", reason:"BTC и монета согласованы"};
+        return { text:`BTC FILTER: ALLOW ${coin.direction}`, cls:"allow", reason:"BTC и монета согласованы" };
       }
       if (btc.state === "TREND" && coin.state === "TREND" && btc.direction !== coin.direction) {
-        return {text:"BTC FILTER: CAUTION", cls:"caution", reason:"монета против BTC"};
+        return { text:"BTC FILTER: CAUTION", cls:"caution", reason:"монета против BTC" };
       }
       if (btc.state === "RANGE" || coin.state === "RANGE") {
-        return {text:"BTC FILTER: CAUTION", cls:"caution", reason:"переходный режим"};
+        return { text:"BTC FILTER: CAUTION", cls:"caution", reason:"переходный режим" };
       }
-      return {text:"BTC FILTER: SKIP", cls:"skip", reason:"нет edge"};
+      return { text:"BTC FILTER: SKIP", cls:"skip", reason:"нет edge" };
     }
 
-    function renderTop(btc, data){
-      const riskClass = btc.chaosRisk === "HIGH" ? "chaos" : (btc.chaosRisk === "MEDIUM" ? "range" : "up");
+    function marketGate(btc){
+      const reasons = [];
+
+      if (btc.state === "CHAOS") reasons.push("BTC = CHAOS");
+      if (btc.chaosRisk === "HIGH") reasons.push("BTC chaos risk = HIGH");
+      if (btc.changes > btc.window * 0.45) reasons.push("слишком много разворотов");
+      if (btc.dominantShareRaw < 0.60) reasons.push("нет доминирования");
+      if (btc.avgWickRatioRaw > 2.5) reasons.push("грязные свечи");
+      if (btc.maxRun < 3) reasons.push("нет серии");
+      if (btc.netMoveRaw < 0.0025) reasons.push("нет импульса");
+
+      if (reasons.length > 0){
+        return {
+          text: "NO TRADE",
+          cls: "skip",
+          reason: reasons.join(" · ")
+        };
+      }
+
+      return {
+        text: "TRADE",
+        cls: "allow",
+        reason: "рынок достаточно чистый для запуска cbit"
+      };
+    }
+
+    function renderTop(btc, data, gate){
+      const riskClass =
+        btc.chaosRisk === "HIGH" ? "chaos" :
+        btc.chaosRisk === "MEDIUM" ? "range" : "up";
+
       let general = "BTC = RANGE → осторожно";
       let generalClass = "range";
-      if (btc.state === "CHAOS"){ general = "BTC = CHAOS → не входить"; generalClass = "chaos"; }
-      else if (btc.state === "TREND"){ general = `BTC = TREND ${btc.direction} → проверяй совпадение`; generalClass = btc.direction === "UP" ? "up" : "down"; }
 
-      const localTradable = data.filter(x => x.symbol !== "BTCUSDT" && x.local.text.startsWith("LOCAL ALLOW"));
-      const btcTradable = data.filter(x => x.symbol !== "BTCUSDT" && x.btcAware.text.startsWith("BTC FILTER: ALLOW"));
+      if (btc.state === "CHAOS"){
+        general = "BTC = CHAOS → не входить";
+        generalClass = "chaos";
+      } else if (btc.state === "TREND"){
+        general = `BTC = TREND ${btc.direction} → проверяй совпадение`;
+        generalClass = btc.direction === "UP" ? "up" : "down";
+      }
+
+      const localTradable = data.filter(
+        x => x.symbol !== "BTCUSDT" && x.local.text.startsWith("LOCAL ALLOW")
+      );
+      const btcTradable = data.filter(
+        x => x.symbol !== "BTCUSDT" && x.btcAware.text.startsWith("BTC FILTER: ALLOW")
+      );
+
+      const gateBoxClass = gate.cls === "allow" ? "okbox" : "dangerbox";
 
       topCards.innerHTML = `
         <div class="card">
           <div class="headline">
             <div>
-              <div class="label">BTC как глобальный фильтр</div>
-              <div class="big ${generalClass}">${general}</div>
+              <div class="label">Финальный gate для cbit</div>
+              <div class="gate ${gate.cls}">${gate.text}</div>
             </div>
             <div style="text-align:right">
               <div class="label">Chaos risk BTC</div>
               <div class="big ${riskClass}">${btc.chaosRisk}</div>
             </div>
           </div>
+
+          <div class="${gateBoxClass}">
+            <div class="label">Причина решения</div>
+            <div class="mini">${gate.reason}</div>
+          </div>
+
           <div class="split" style="margin-top:12px">
+            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
+              <div class="label">BTC как глобальный фильтр</div>
+              <div class="big ${generalClass}" style="margin-top:6px;">${general}</div>
+              <div class="mini">net move: ${btc.netMovePct}% · run: ${btc.maxRun} · changes: ${btc.changes} · dominance: ${btc.dominantShare}% · wick/body: ${btc.avgWickRatio}</div>
+            </div>
             <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
               <div class="label">Отдельно по монетам</div>
               <div class="mini">${localTradable.length ? localTradable.map(x => x.symbol.replace("USDT","")).join(", ") : "нет явных локальных трендов"}</div>
-            </div>
-            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
-              <div class="label">С учётом BTC</div>
+              <div class="label" style="margin-top:10px;">С учётом BTC</div>
               <div class="mini">${btcTradable.length ? btcTradable.map(x => x.symbol.replace("USDT","")).join(", ") : "ничего не подтверждено BTC"}</div>
             </div>
           </div>
-          ${btc.predictorSignals.length ? `<div class="warnbox"><div class="label">Сигналы деградации BTC</div><div class="mini">${btc.predictorSignals.join(" · ")}</div></div>` : ``}
+
+          ${btc.predictorSignals.length ? `
+            <div class="warnbox">
+              <div class="label">Сигналы деградации BTC</div>
+              <div class="mini">${btc.predictorSignals.join(" · ")}</div>
+            </div>
+          ` : ``}
         </div>
       `;
     }
 
     function renderCoins(data){
       coinCards.innerHTML = "";
-      data.filter(x => x.symbol !== "BTCUSDT").forEach(item => {
-        const warningBox = item.predictorSignals.length
-          ? `<div class="${item.chaosRisk === 'HIGH' ? 'dangerbox' : 'warnbox'}">
-               <div class="label">Предиктор хаоса монеты</div>
-               <div class="mini">${item.chaosRisk} · ${item.predictorSignals.join(" · ")}</div>
-             </div>`
-          : "";
-        const div = document.createElement("div");
-        div.className = "card";
-        div.innerHTML = `
-          <div class="headline">
-            <div class="coin">${item.symbol.replace("USDT","")}</div>
-            <div class="price">${item.price.toFixed(item.symbol === "XRPUSDT" ? 4 : 2)}</div>
-          </div>
 
-          <div class="mode ${modeClass(item.state, item.direction)}">${modeText(item.state, item.direction)}</div>
-          <div class="meta">
-            <span>net move: ${item.netMovePct}%</span>
-            <span>run: ${item.maxRun}</span>
-            <span>changes: ${item.changes}</span>
-            <span>dominance: ${item.dominantShare}%</span>
-            <span>wick/body: ${item.avgWickRatio}</span>
-          </div>
+      data
+        .filter(x => x.symbol !== "BTCUSDT")
+        .forEach(item => {
+          const warningBox = item.predictorSignals.length
+            ? `
+              <div class="${item.chaosRisk === 'HIGH' ? 'dangerbox' : 'warnbox'}">
+                <div class="label">Предиктор хаоса монеты</div>
+                <div class="mini">${item.chaosRisk} · ${item.predictorSignals.join(" · ")}</div>
+              </div>
+            `
+            : "";
 
-          <div class="infobox">
-            <div class="label">Отдельно по монете</div>
-            <div class="localDecision ${item.local.cls}">${item.local.text}</div>
-            <div class="mini">${item.local.reason}</div>
-          </div>
+          const btcBoxClass =
+            item.btcAware.cls === "skip" ? "dangerbox" :
+            item.btcAware.cls === "caution" ? "warnbox" : "infobox";
 
-          <div class="${item.btcAware.cls === 'skip' ? 'dangerbox' : (item.btcAware.cls === 'caution' ? 'warnbox' : 'infobox')}">
-            <div class="label">С учётом BTC</div>
-            <div class="decision ${item.btcAware.cls}">${item.btcAware.text}</div>
-            <div class="mini">${item.btcAware.reason}</div>
-          </div>
+          const div = document.createElement("div");
+          div.className = "card";
+          div.innerHTML = `
+            <div class="headline">
+              <div class="coin">${item.symbol.replace("USDT","")}</div>
+              <div class="price">${item.price.toFixed(item.symbol === "XRPUSDT" ? 4 : 2)}</div>
+            </div>
 
-          ${warningBox}
-        `;
-        coinCards.appendChild(div);
-      });
+            <div class="mode ${modeClass(item.state, item.direction)}">${modeText(item.state, item.direction)}</div>
+            <div class="meta">
+              <span>net move: ${item.netMovePct}%</span>
+              <span>run: ${item.maxRun}</span>
+              <span>changes: ${item.changes}</span>
+              <span>dominance: ${item.dominantShare}%</span>
+              <span>wick/body: ${item.avgWickRatio}</span>
+            </div>
+
+            <div class="infobox">
+              <div class="label">Отдельно по монете</div>
+              <div class="localDecision ${item.local.cls}">${item.local.text}</div>
+              <div class="mini">${item.local.reason}</div>
+            </div>
+
+            <div class="${btcBoxClass}">
+              <div class="label">С учётом BTC</div>
+              <div class="decision ${item.btcAware.cls}">${item.btcAware.text}</div>
+              <div class="mini">${item.btcAware.reason}</div>
+            </div>
+
+            ${warningBox}
+          `;
+          coinCards.appendChild(div);
+        });
     }
 
     async function loadOne(symbol){
       const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1m&limit=${LOOKBACK}`;
-      const r = await fetch(url, {cache:"no-store"});
+      const r = await fetch(url, { cache:"no-store" });
       if (!r.ok) throw new Error(`${symbol}: ${r.status}`);
       const candles = await r.json();
       const x = classify(candles);
@@ -299,11 +541,16 @@
       try{
         const data = await Promise.all(SYMBOLS.map(loadOne));
         const btc = data.find(x => x.symbol === "BTCUSDT");
+        const gate = marketGate(btc);
+
         data.forEach(x => {
           x.local = localDecision(x);
-          x.btcAware = btc.symbol === x.symbol ? {text:"—", cls:"caution", reason:"это сам BTC"} : btcAwareDecision(btc, x);
+          x.btcAware = btc.symbol === x.symbol
+            ? { text:"—", cls:"caution", reason:"это сам BTC" }
+            : btcAwareDecision(btc, x);
         });
-        renderTop(btc, data);
+
+        renderTop(btc, data, gate);
         renderCoins(data);
         appStatus.textContent = `Updated ${new Date().toLocaleTimeString()} · window ${LOOKBACK}m`;
       } catch (e){
@@ -317,17 +564,29 @@
       timer = setInterval(refreshAll, Number(intervalSelect.value));
       toggleBtn.textContent = "Stop";
     }
+
     function stopAuto(){
-      if (timer){ clearInterval(timer); timer = null; }
+      if (timer){
+        clearInterval(timer);
+        timer = null;
+      }
       toggleBtn.textContent = "Start";
     }
 
     refreshBtn.addEventListener("click", refreshAll);
+
     toggleBtn.addEventListener("click", () => {
-      if (timer){ stopAuto(); appStatus.textContent = "Stopped"; }
-      else { startAuto(); }
+      if (timer){
+        stopAuto();
+        appStatus.textContent = "Stopped";
+      } else {
+        startAuto();
+      }
     });
-    intervalSelect.addEventListener("change", () => { if (timer) startAuto(); });
+
+    intervalSelect.addEventListener("change", () => {
+      if (timer) startAuto();
+    });
 
     refreshAll();
   </script>
