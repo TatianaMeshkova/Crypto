@@ -55,6 +55,7 @@
       background:var(--btn);
       color:#081427;
       min-width:120px;
+      cursor:pointer;
     }
     select{
       background:var(--panel2);
@@ -193,7 +194,7 @@
 <body>
   <div class="wrap">
     <h1>Crypto Chaos Terminal</h1>
-    <div class="sub">BTC • ETH • SOL • XRP • 1m candles • окно 30 минут • BTC.D / USDT.D</div>
+    <div class="sub">BTC • ETH • SOL • XRP • 1m candles • окно 30 минут • BTC.D / USDT.D / Polymarket / Manual Macro Calendar</div>
 
     <div class="toolbar">
       <button id="refreshBtn">Refresh</button>
@@ -226,6 +227,50 @@
       BTC_DOM_HIGH_DELTA: 0.15
     };
 
+    const EVENT_SETTINGS = {
+      POLY_REFRESH_MS: 60000,
+      CAL_REFRESH_MS: 60000,
+      POLY_KEYWORDS: [
+        "fed",
+        "fomc",
+        "powell",
+        "cpi",
+        "pce",
+        "inflation",
+        "nfp",
+        "payrolls",
+        "jobless",
+        "interest rate",
+        "recession",
+        "iran",
+        "israel",
+        "oil",
+        "war",
+        "strike",
+        "sanctions",
+        "sec",
+        "etf",
+        "binance",
+        "coinbase",
+        "hack"
+      ],
+      HIGH_WINDOW_MIN: 90,
+      MEDIUM_WINDOW_MIN: 240
+    };
+
+    // Обновляй этот список вручную.
+    // Формат времени: UTC
+    const MANUAL_MACRO_EVENTS = [
+      { title: "US CPI", datetime: "2026-03-20T12:30:00Z", impact: "HIGH" },
+      { title: "FOMC Rate Decision", datetime: "2026-03-25T18:00:00Z", impact: "HIGH" },
+      { title: "Powell Speech", datetime: "2026-03-25T18:30:00Z", impact: "HIGH" },
+      { title: "Non-Farm Payrolls", datetime: "2026-04-03T12:30:00Z", impact: "HIGH" },
+      { title: "PCE", datetime: "2026-03-27T12:30:00Z", impact: "HIGH" },
+      { title: "PPI", datetime: "2026-03-21T12:30:00Z", impact: "MEDIUM" },
+      { title: "Retail Sales", datetime: "2026-03-22T12:30:00Z", impact: "MEDIUM" },
+      { title: "Jobless Claims", datetime: "2026-03-19T12:30:00Z", impact: "MEDIUM" }
+    ];
+
     const appStatus = document.getElementById("appStatus");
     const topCards = document.getElementById("topCards");
     const coinCards = document.getElementById("coinCards");
@@ -239,6 +284,10 @@
       data: null,
       lastFetchTs: 0,
       baseline: null
+    };
+
+    let eventCache = {
+      poly: { data: null, ts: 0 }
     };
 
     function modeClass(state, direction){
@@ -261,6 +310,21 @@
       if (delta > 0.0001) return "↑";
       if (delta < -0.0001) return "↓";
       return "→";
+    }
+
+    function normalizeText(s){
+      return String(s || "").toLowerCase();
+    }
+
+    function containsAny(text, keywords){
+      const t = normalizeText(text);
+      return keywords.some(k => t.includes(k.toLowerCase()));
+    }
+
+    function minutesUntil(dateStr){
+      const target = new Date(dateStr).getTime();
+      const now = Date.now();
+      return (target - now) / (1000 * 60);
     }
 
     function classify(candles){
@@ -466,16 +530,147 @@
 
       dominanceCache.data = data;
       dominanceCache.lastFetchTs = now;
-
       return data;
     }
 
-    function computeEventRisk(dom){
+    async function fetchPolymarketRisk(){
+      const now = Date.now();
+      if (eventCache.poly.data && now - eventCache.poly.ts < EVENT_SETTINGS.POLY_REFRESH_MS) {
+        return eventCache.poly.data;
+      }
+
+      const url = "https://gamma-api.polymarket.com/events?active=true&closed=false&limit=100";
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) throw new Error(`Polymarket: ${r.status}`);
+
+      const events = await r.json();
+      const matched = [];
+
+      for (const ev of events) {
+        const title = ev.title || ev.slug || "";
+        const description = ev.description || "";
+        const endDate = ev.endDate || ev.end_date || ev.endDateIso || ev.end_time || null;
+        const text = `${title} ${description}`;
+
+        if (!containsAny(text, EVENT_SETTINGS.POLY_KEYWORDS)) continue;
+
+        const mins = endDate ? minutesUntil(endDate) : null;
+        matched.push({ title, endDate, mins });
+      }
+
+      let score = 0;
+      const reasons = [];
+
+      const veryNear = matched.filter(x => x.mins !== null && x.mins >= 0 && x.mins <= EVENT_SETTINGS.HIGH_WINDOW_MIN);
+      const near = matched.filter(x => x.mins !== null && x.mins > EVENT_SETTINGS.HIGH_WINDOW_MIN && x.mins <= EVENT_SETTINGS.MEDIUM_WINDOW_MIN);
+
+      if (veryNear.length >= 1) {
+        score += 45;
+        reasons.push(`Polymarket: близкие event markets (${veryNear.length})`);
+      } else if (near.length >= 1) {
+        score += 20;
+        reasons.push(`Polymarket: события сегодня (${near.length})`);
+      }
+
+      if (matched.length >= 5) {
+        score += 20;
+        reasons.push(`Polymarket: много активных risk markets (${matched.length})`);
+      } else if (matched.length >= 2) {
+        score += 10;
+        reasons.push(`Polymarket: есть risk markets (${matched.length})`);
+      }
+
+      score = Math.min(score, 100);
+
+      let level = "LOW";
+      let cls = "allow";
+      if (score >= 50) {
+        level = "HIGH";
+        cls = "skip";
+      } else if (score >= 20) {
+        level = "MEDIUM";
+        cls = "caution";
+      }
+
+      const data = {
+        source: "Polymarket",
+        level,
+        cls,
+        score,
+        reasons: reasons.length ? reasons : ["Polymarket risk markets не давят"],
+        matched: matched.slice(0, 10)
+      };
+
+      eventCache.poly = { data, ts: now };
+      return data;
+    }
+
+    function fetchEconomicCalendarRiskNoKey(){
+      const upcoming = [];
+
+      for (const ev of MANUAL_MACRO_EVENTS) {
+        const mins = minutesUntil(ev.datetime);
+        if (mins < 0) continue;
+
+        upcoming.push({
+          event: ev.title,
+          date: ev.datetime,
+          mins,
+          impact: ev.impact
+        });
+      }
+
+      upcoming.sort((a, b) => a.mins - b.mins);
+
+      let score = 0;
+      const reasons = [];
+
+      const highSoon = upcoming.filter(x => x.impact === "HIGH" && x.mins <= 90);
+      const highToday = upcoming.filter(x => x.impact === "HIGH" && x.mins > 90 && x.mins <= 240);
+      const medSoon = upcoming.filter(x => x.impact === "MEDIUM" && x.mins <= 90);
+
+      if (highSoon.length >= 1) {
+        score += 60;
+        reasons.push(`calendar: high-impact скоро (${highSoon[0].event})`);
+      } else if (highToday.length >= 1) {
+        score += 30;
+        reasons.push(`calendar: high-impact сегодня (${highToday[0].event})`);
+      }
+
+      if (medSoon.length >= 1) {
+        score += 15;
+        reasons.push(`calendar: medium-impact скоро (${medSoon[0].event})`);
+      }
+
+      score = Math.min(score, 100);
+
+      let level = "LOW";
+      let cls = "allow";
+
+      if (score >= 50) {
+        level = "HIGH";
+        cls = "skip";
+      } else if (score >= 20) {
+        level = "MEDIUM";
+        cls = "caution";
+      }
+
+      return {
+        source: "Manual Calendar",
+        level,
+        cls,
+        score,
+        reasons: reasons.length ? reasons : ["ближайших сильных релизов не задано"],
+        upcoming: upcoming.slice(0, 10)
+      };
+    }
+
+    function computeDominanceRisk(dom){
       if (!dom) {
         return {
           level: "UNKNOWN",
           cls: "caution",
-          score: 30,
+          score: 20,
           reasons: ["нет dominance data"]
         };
       }
@@ -499,17 +694,49 @@
         reasons.push(`BTC.D растёт (${dom.btcDelta.toFixed(2)} п.п.)`);
       }
 
+      let level = "LOW";
+      let cls = "allow";
       if (score >= 50) {
-        return { level: "HIGH", cls: "skip", score, reasons };
+        level = "HIGH";
+        cls = "skip";
+      } else if (score >= 20) {
+        level = "MEDIUM";
+        cls = "caution";
       }
-      if (score >= 20) {
-        return { level: "MEDIUM", cls: "caution", score, reasons };
-      }
+
       return {
-        level: "LOW",
-        cls: "allow",
-        score,
+        level,
+        cls,
+        score: Math.min(score, 100),
         reasons: reasons.length ? reasons : ["dominance спокойная"]
+      };
+    }
+
+    function combineExternalEventRisk(polyRisk, calRisk){
+      const score = Math.max(polyRisk?.score || 0, calRisk?.score || 0);
+      const reasons = [
+        ...(polyRisk?.reasons || []),
+        ...(calRisk?.reasons || [])
+      ];
+
+      let level = "LOW";
+      let cls = "allow";
+
+      if ((polyRisk && polyRisk.level === "HIGH") || (calRisk && calRisk.level === "HIGH") || score >= 50) {
+        level = "HIGH";
+        cls = "skip";
+      } else if ((polyRisk && polyRisk.level === "MEDIUM") || (calRisk && calRisk.level === "MEDIUM") || score >= 20) {
+        level = "MEDIUM";
+        cls = "caution";
+      }
+
+      return {
+        level,
+        cls,
+        score,
+        reasons: reasons.length ? reasons : ["external event risk низкий"],
+        polyRisk,
+        calRisk
       };
     }
 
@@ -578,6 +805,34 @@
       return { level, cls, score, reasons };
     }
 
+    function computeFinalEventRisk(dominanceRisk, externalRisk){
+      const score = Math.max(dominanceRisk.score || 0, externalRisk.score || 0);
+      const reasons = [
+        ...(dominanceRisk.reasons || []),
+        ...(externalRisk.reasons || [])
+      ];
+
+      let level = "LOW";
+      let cls = "allow";
+
+      if (dominanceRisk.level === "HIGH" || externalRisk.level === "HIGH" || score >= 50) {
+        level = "HIGH";
+        cls = "skip";
+      } else if (dominanceRisk.level === "MEDIUM" || externalRisk.level === "MEDIUM" || score >= 20) {
+        level = "MEDIUM";
+        cls = "caution";
+      }
+
+      return {
+        level,
+        cls,
+        score,
+        reasons,
+        polyRisk: externalRisk.polyRisk,
+        calRisk: externalRisk.calRisk
+      };
+    }
+
     function computeFinalChaos(technical, eventRisk){
       const reasons = [...technical.reasons, ...eventRisk.reasons];
       const score = clamp(Math.max(technical.score, eventRisk.score), 0, 100);
@@ -629,6 +884,14 @@
       const gateBoxClass =
         gate.cls === "allow" ? "okbox" :
         gate.cls === "caution" ? "warnbox" : "dangerbox";
+
+      const polyText = eventRisk.polyRisk
+        ? `${eventRisk.polyRisk.level} · ${eventRisk.polyRisk.reasons.join(" · ")}`
+        : "нет данных";
+
+      const calText = eventRisk.calRisk
+        ? `${eventRisk.calRisk.level} · ${eventRisk.calRisk.reasons.join(" · ")}`
+        : "нет данных";
 
       topCards.innerHTML = `
         <div class="card">
@@ -694,6 +957,18 @@
                 BTC.D ↑ = альты слабее<br/>
                 USDT.D ↑ = risk-off / деньги в кэш
               </div>
+            </div>
+          </div>
+
+          <div class="split" style="margin-top:12px">
+            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
+              <div class="label">Polymarket risk</div>
+              <div class="mini">${polyText}</div>
+            </div>
+
+            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
+              <div class="label">Manual macro calendar risk</div>
+              <div class="mini">${calText}</div>
             </div>
           </div>
 
@@ -792,11 +1067,20 @@
     async function refreshAll(){
       appStatus.textContent = "Loading...";
       try{
-        const [data, dom] = await Promise.all([
+        const [data, dom, polyRisk] = await Promise.all([
           Promise.all(SYMBOLS.map(loadOne)),
-          fetchDominanceData().catch(() => null)
+          fetchDominanceData().catch(() => null),
+          fetchPolymarketRisk().catch(() => ({
+            source: "Polymarket",
+            level: "UNKNOWN",
+            cls: "caution",
+            score: 20,
+            reasons: ["ошибка Polymarket"],
+            matched: []
+          }))
         ]);
 
+        const calRisk = fetchEconomicCalendarRiskNoKey();
         const btc = data.find(x => x.symbol === "BTCUSDT");
 
         data.forEach(x => {
@@ -807,7 +1091,9 @@
         });
 
         const technical = computeTechnicalChaos(btc);
-        const eventRisk = computeEventRisk(dom);
+        const dominanceRisk = computeDominanceRisk(dom);
+        const externalRisk = combineExternalEventRisk(polyRisk, calRisk);
+        const eventRisk = computeFinalEventRisk(dominanceRisk, externalRisk);
         const finalChaos = computeFinalChaos(technical, eventRisk);
         const gate = marketGate(finalChaos);
 
