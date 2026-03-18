@@ -3,37 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Crypto Decision Terminal v3</title>
+  <title>Crypto Decision Terminal v4</title>
   <style>
     :root{
       --bg:#071226; --panel:#0f1d3a; --panel2:#16264b; --text:#eaf0ff; --muted:#9fb0d9;
       --ok:#17c964; --warn:#f5a524; --bad:#f31260; --border:#243b73; --btn:#79aaff;
     }
     *{box-sizing:border-box}
-    body{
-      margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-      background:linear-gradient(180deg,#06101f 0%, #0a1831 100%); color:var(--text); padding:18px 14px 28px;
-    }
-    .wrap{max-width:900px;margin:0 auto}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:linear-gradient(180deg,#06101f 0%, #0a1831 100%);color:var(--text);padding:18px 14px 28px}
+    .wrap{max-width:980px;margin:0 auto}
     h1{margin:8px 0 6px;font-size:34px;line-height:1.04;font-weight:800;letter-spacing:-0.03em}
     .sub{color:var(--muted);font-size:18px;margin-bottom:16px}
     .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-    button, select{
-      border:none;border-radius:16px;padding:14px 16px;font-size:18px;font-weight:700;
-    }
+    button, select{border:none;border-radius:16px;padding:14px 16px;font-size:18px;font-weight:700}
     button{background:var(--btn);color:#081427;min-width:120px}
     select{background:var(--panel2);color:var(--text);border:1px solid var(--border)}
     .status{font-size:16px;color:var(--muted);margin:4px 0 14px}
+    .sectionTitle{font-size:20px;font-weight:800;margin:18px 0 10px}
     .topgrid,.grid{display:grid;grid-template-columns:1fr;gap:12px}
-    .card{
-      background:rgba(15,29,58,0.95); border:1px solid var(--border); border-radius:22px;
-      padding:16px; box-shadow:0 10px 25px rgba(0,0,0,0.16);
-    }
+    .card{background:rgba(15,29,58,0.95);border:1px solid var(--border);border-radius:22px;padding:16px;box-shadow:0 10px 25px rgba(0,0,0,0.16)}
     .headline{display:flex;justify-content:space-between;align-items:center;gap:10px}
     .coin{font-size:26px;font-weight:800}
     .price{font-size:20px;font-weight:700}
     .mode{font-size:22px;font-weight:800;margin-top:10px}
     .decision{font-size:20px;font-weight:800;margin-top:8px}
+    .localDecision{font-size:18px;font-weight:800;margin-top:6px}
     .up{color:var(--ok)} .down{color:var(--bad)} .range{color:var(--warn)} .chaos{color:var(--bad)}
     .allow{color:var(--ok)} .caution{color:var(--warn)} .skip{color:var(--bad)}
     .meta{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin-top:10px}
@@ -41,11 +35,10 @@
     .big{font-size:24px;font-weight:800}
     .mini{font-size:15px;color:var(--muted);margin-top:8px;line-height:1.4}
     .split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .warnbox,.dangerbox{
-      border-radius:18px; padding:12px; margin-top:10px;
-    }
+    .warnbox,.dangerbox,.infobox{border-radius:18px;padding:12px;margin-top:10px}
     .warnbox{border:1px solid rgba(245,165,36,0.35);background:rgba(245,165,36,0.08)}
     .dangerbox{border:1px solid rgba(243,18,96,0.35);background:rgba(243,18,96,0.08)}
+    .infobox{border:1px solid rgba(121,170,255,0.35);background:rgba(121,170,255,0.08)}
     @media (max-width:640px){ .split{grid-template-columns:1fr} }
   </style>
 </head>
@@ -67,6 +60,8 @@
 
     <div id="appStatus" class="status">Stopped</div>
     <div class="topgrid" id="topCards"></div>
+
+    <div class="sectionTitle">BTC filter + монеты</div>
     <div class="grid" id="coinCards"></div>
   </div>
 
@@ -142,7 +137,6 @@
       const dominantShare = Math.max(upCount, downCount) / Math.max(1, (upCount + downCount));
       const avgWickRatio = wickRatios.reduce((a,b)=>a+b,0) / wickRatios.length;
 
-      // Строгие правила
       const trend = (
         maxRun >= 4 &&
         netMove >= 0.0035 &&
@@ -163,7 +157,6 @@
       if (trend) state = "TREND";
       else if (chaos) state = "CHAOS";
 
-      // Предиктор хаоса/деградации
       const predictorSignals = [];
       if (maxRun <= 3) predictorSignals.push("серии короткие");
       if (changes >= Math.floor(n * 0.45)) predictorSignals.push("много разворотов");
@@ -185,21 +178,29 @@
       };
     }
 
-    function computeDecision(btc, coin){
-      if (btc.state === "CHAOS") return {text:"SKIP", cls:"skip", reason:"BTC в хаосе"};
-      if (btc.chaosRisk === "HIGH") return {text:"SKIP", cls:"skip", reason:"BTC близок к хаосу"};
-      if (coin.state === "CHAOS") return {text:"SKIP", cls:"skip", reason:"монета в хаосе"};
-      if (coin.chaosRisk === "HIGH") return {text:"SKIP", cls:"skip", reason:"монета деградирует"};
+    function localDecision(coin){
+      if (coin.state === "CHAOS") return {text:"LOCAL SKIP", cls:"skip", reason:"сама монета в хаосе"};
+      if (coin.chaosRisk === "HIGH") return {text:"LOCAL SKIP", cls:"skip", reason:"у монеты высокий риск хаоса"};
+      if (coin.state === "TREND") return {text:`LOCAL ALLOW ${coin.direction}`, cls:"allow", reason:"сама монета даёт тренд"};
+      if (coin.state === "RANGE" && coin.chaosRisk === "LOW") return {text:"LOCAL CAUTION", cls:"caution", reason:"монета в range без сильной деградации"};
+      return {text:"LOCAL SKIP", cls:"skip", reason:"локально edge слабый"};
+    }
+
+    function btcAwareDecision(btc, coin){
+      if (btc.state === "CHAOS") return {text:"BTC FILTER: SKIP", cls:"skip", reason:"BTC в хаосе"};
+      if (btc.chaosRisk === "HIGH") return {text:"BTC FILTER: SKIP", cls:"skip", reason:"BTC близок к хаосу"};
+      if (coin.state === "CHAOS") return {text:"BTC FILTER: SKIP", cls:"skip", reason:"монета в хаосе"};
+      if (coin.chaosRisk === "HIGH") return {text:"BTC FILTER: SKIP", cls:"skip", reason:"монета деградирует"};
       if (btc.state === "TREND" && coin.state === "TREND" && btc.direction === coin.direction) {
-        return {text:`ALLOW ${coin.direction}`, cls:"allow", reason:"BTC и монета согласованы"};
+        return {text:`BTC FILTER: ALLOW ${coin.direction}`, cls:"allow", reason:"BTC и монета согласованы"};
       }
       if (btc.state === "TREND" && coin.state === "TREND" && btc.direction !== coin.direction) {
-        return {text:"CAUTION", cls:"caution", reason:"монета против BTC"};
+        return {text:"BTC FILTER: CAUTION", cls:"caution", reason:"монета против BTC"};
       }
       if (btc.state === "RANGE" || coin.state === "RANGE") {
-        return {text:"CAUTION", cls:"caution", reason:"переходный режим"};
+        return {text:"BTC FILTER: CAUTION", cls:"caution", reason:"переходный режим"};
       }
-      return {text:"SKIP", cls:"skip", reason:"нет edge"};
+      return {text:"BTC FILTER: SKIP", cls:"skip", reason:"нет edge"};
     }
 
     function renderTop(btc, data){
@@ -209,14 +210,14 @@
       if (btc.state === "CHAOS"){ general = "BTC = CHAOS → не входить"; generalClass = "chaos"; }
       else if (btc.state === "TREND"){ general = `BTC = TREND ${btc.direction} → проверяй совпадение`; generalClass = btc.direction === "UP" ? "up" : "down"; }
 
-      const tradable = data.filter(x => x.symbol !== "BTCUSDT" && x.decision.text.startsWith("ALLOW"));
-      const tradableText = tradable.length ? tradable.map(x => x.symbol.replace("USDT","")).join(", ") : "нет";
+      const localTradable = data.filter(x => x.symbol !== "BTCUSDT" && x.local.text.startsWith("LOCAL ALLOW"));
+      const btcTradable = data.filter(x => x.symbol !== "BTCUSDT" && x.btcAware.text.startsWith("BTC FILTER: ALLOW"));
 
       topCards.innerHTML = `
         <div class="card">
           <div class="headline">
             <div>
-              <div class="label">Общий режим</div>
+              <div class="label">BTC как глобальный фильтр</div>
               <div class="big ${generalClass}">${general}</div>
             </div>
             <div style="text-align:right">
@@ -226,12 +227,12 @@
           </div>
           <div class="split" style="margin-top:12px">
             <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
-              <div class="label">Строгие метрики BTC</div>
-              <div class="mini">net move: ${btc.netMovePct}% · run: ${btc.maxRun} · changes: ${btc.changes} · dominance: ${btc.dominantShare}% · wick/body: ${btc.avgWickRatio}</div>
+              <div class="label">Отдельно по монетам</div>
+              <div class="mini">${localTradable.length ? localTradable.map(x => x.symbol.replace("USDT","")).join(", ") : "нет явных локальных трендов"}</div>
             </div>
             <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
-              <div class="label">Сейчас можно смотреть</div>
-              <div class="mini">${tradableText}</div>
+              <div class="label">С учётом BTC</div>
+              <div class="mini">${btcTradable.length ? btcTradable.map(x => x.symbol.replace("USDT","")).join(", ") : "ничего не подтверждено BTC"}</div>
             </div>
           </div>
           ${btc.predictorSignals.length ? `<div class="warnbox"><div class="label">Сигналы деградации BTC</div><div class="mini">${btc.predictorSignals.join(" · ")}</div></div>` : ``}
@@ -244,7 +245,7 @@
       data.filter(x => x.symbol !== "BTCUSDT").forEach(item => {
         const warningBox = item.predictorSignals.length
           ? `<div class="${item.chaosRisk === 'HIGH' ? 'dangerbox' : 'warnbox'}">
-               <div class="label">Предиктор хаоса</div>
+               <div class="label">Предиктор хаоса монеты</div>
                <div class="mini">${item.chaosRisk} · ${item.predictorSignals.join(" · ")}</div>
              </div>`
           : "";
@@ -255,9 +256,8 @@
             <div class="coin">${item.symbol.replace("USDT","")}</div>
             <div class="price">${item.price.toFixed(item.symbol === "XRPUSDT" ? 4 : 2)}</div>
           </div>
+
           <div class="mode ${modeClass(item.state, item.direction)}">${modeText(item.state, item.direction)}</div>
-          <div class="decision ${item.decision.cls}">${item.decision.text}</div>
-          <div class="mini">${item.decision.reason}</div>
           <div class="meta">
             <span>net move: ${item.netMovePct}%</span>
             <span>run: ${item.maxRun}</span>
@@ -265,6 +265,19 @@
             <span>dominance: ${item.dominantShare}%</span>
             <span>wick/body: ${item.avgWickRatio}</span>
           </div>
+
+          <div class="infobox">
+            <div class="label">Отдельно по монете</div>
+            <div class="localDecision ${item.local.cls}">${item.local.text}</div>
+            <div class="mini">${item.local.reason}</div>
+          </div>
+
+          <div class="${item.btcAware.cls === 'skip' ? 'dangerbox' : (item.btcAware.cls === 'caution' ? 'warnbox' : 'infobox')}">
+            <div class="label">С учётом BTC</div>
+            <div class="decision ${item.btcAware.cls}">${item.btcAware.text}</div>
+            <div class="mini">${item.btcAware.reason}</div>
+          </div>
+
           ${warningBox}
         `;
         coinCards.appendChild(div);
@@ -286,7 +299,10 @@
       try{
         const data = await Promise.all(SYMBOLS.map(loadOne));
         const btc = data.find(x => x.symbol === "BTCUSDT");
-        data.forEach(x => x.decision = computeDecision(btc, x));
+        data.forEach(x => {
+          x.local = localDecision(x);
+          x.btcAware = btc.symbol === x.symbol ? {text:"—", cls:"caution", reason:"это сам BTC"} : btcAwareDecision(btc, x);
+        });
         renderTop(btc, data);
         renderCoins(data);
         appStatus.textContent = `Updated ${new Date().toLocaleTimeString()} · window ${LOOKBACK}m`;
