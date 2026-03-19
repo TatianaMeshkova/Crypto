@@ -80,6 +80,7 @@
     .coin{font-size:26px;font-weight:800}
     .price{font-size:20px;font-weight:700}
     .mode{font-size:22px;font-weight:800;margin-top:10px}
+    .bias{font-size:16px;font-weight:700;margin-top:6px;color:var(--muted)}
     .gate{font-size:28px;font-weight:900;margin-top:6px}
     .big{font-size:24px;font-weight:800}
     .chaosLevel{font-size:30px;font-weight:900;margin-top:6px}
@@ -175,12 +176,12 @@
     const SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT"];
     const LOOKBACK = 30;
 
-    // ВСТАВЬ СВОЙ КЛЮЧ
+    // ВСТАВЬ СВОЙ КЛЮЧ ИЛИ ОСТАВЬ КАК ЕСТЬ, ЕСЛИ НЕ НУЖЕН КАЛЕНДАРЬ
     const TE_API_KEY = "YOUR_TRADING_ECONOMICS_API_KEY";
 
     const SETTINGS = {
       DOMINANCE_REFRESH_MS: 60000,
-      CALENDAR_REFRESH_MS: 300000, // 5 минут
+      CALENDAR_REFRESH_MS: 300000,
 
       USDT_DOM_MEDIUM_DELTA: 0.05,
       USDT_DOM_HIGH_DELTA: 0.10,
@@ -231,6 +232,12 @@
     function modeText(state, direction){
       if (state === "TREND") return `TREND ${direction}`;
       return state;
+    }
+
+    function directionBiasText(state, direction){
+      if (state === "TREND") return `Direction bias: ${direction}`;
+      if (state === "RANGE") return `Range bias: ${direction}`;
+      return `Chaos bias: ${direction}`;
     }
 
     function classify(candles){
@@ -418,8 +425,8 @@
       }
 
       const url = `https://api.tradingeconomics.com/calendar?c=${encodeURIComponent(TE_API_KEY)}`;
-
       const res = await fetch(url, { cache: "no-store" });
+
       if (!res.ok) {
         throw new Error(`Trading Economics calendar: ${res.status}`);
       }
@@ -448,7 +455,7 @@
       const filtered = events
         .map(normalizeCalendarEvent)
         .filter(e => e.dateMs && e.importance >= 2 && e.dateMs > now - 60 * 60000)
-        .sort((a, b) => a.dateMs - b.dateMs);
+        .sort((a,b) => a.dateMs - b.dateMs);
 
       if (!filtered.length) return null;
 
@@ -825,6 +832,7 @@
           </div>
 
           <div class="mode ${modeClass(item.state, item.direction)}">${modeText(item.state, item.direction)}</div>
+          <div class="bias ${item.direction === 'UP' ? 'up' : 'down'}">${directionBiasText(item.state, item.direction)}</div>
 
           <div class="split3" style="margin-top:12px;">
             <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
