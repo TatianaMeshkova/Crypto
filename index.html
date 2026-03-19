@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Crypto Chaos Terminal Independent</title>
+  <title>Crypto Chaos Terminal</title>
   <style>
     :root{
       --bg:#071226;
@@ -150,7 +150,7 @@
 <body>
   <div class="wrap">
     <h1>Crypto Chaos Terminal</h1>
-    <div class="sub">BTC • ETH • SOL • XRP • независимая оценка каждой монеты • общее состояние рынка</div>
+    <div class="sub">BTC • ETH • SOL • XRP • независимая оценка каждой монеты • общая оценка хаоса по рынку</div>
 
     <div class="toolbar">
       <button id="refreshBtn">Refresh</button>
@@ -175,44 +175,21 @@
     const SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT"];
     const LOOKBACK = 30;
 
+    // ВСТАВЬ СВОЙ КЛЮЧ
+    const TE_API_KEY = "YOUR_TRADING_ECONOMICS_API_KEY";
+
     const SETTINGS = {
       DOMINANCE_REFRESH_MS: 60000,
+      CALENDAR_REFRESH_MS: 300000, // 5 минут
+
       USDT_DOM_MEDIUM_DELTA: 0.05,
       USDT_DOM_HIGH_DELTA: 0.10,
       BTC_DOM_MEDIUM_DELTA: 0.08,
-      BTC_DOM_HIGH_DELTA: 0.15
-    };
+      BTC_DOM_HIGH_DELTA: 0.15,
 
-    const CALENDAR_EVENTS = [
-      {
-        name: "FOMC Meeting",
-        category: "macro",
-        severity: "HIGH",
-        start: "2026-03-18T18:00:00Z",
-        end: "2026-03-18T19:00:00Z"
-      },
-      {
-        name: "FOMC Press Conference",
-        category: "macro",
-        severity: "HIGH",
-        start: "2026-03-18T18:30:00Z",
-        end: "2026-03-18T19:30:00Z"
-      },
-      {
-        name: "Employment Situation",
-        category: "macro",
-        severity: "HIGH",
-        start: "2026-04-03T12:30:00Z",
-        end: "2026-04-03T13:30:00Z"
-      },
-      {
-        name: "Consumer Price Index",
-        category: "macro",
-        severity: "HIGH",
-        start: "2026-04-10T12:30:00Z",
-        end: "2026-04-10T13:30:00Z"
-      }
-    ];
+      CALENDAR_HIGH_WINDOW_MIN: 60,
+      CALENDAR_MEDIUM_WINDOW_MIN: 120
+    };
 
     const appStatus = document.getElementById("appStatus");
     const topCards = document.getElementById("topCards");
@@ -227,6 +204,11 @@
       data: null,
       lastFetchTs: 0,
       baseline: null
+    };
+
+    let calendarCache = {
+      data: null,
+      lastFetchTs: 0
     };
 
     function clamp(value, min, max){
@@ -268,7 +250,7 @@
         const wick = Math.max(0, totalRange - body);
 
         let ratio = body > 0 ? wick / body : 10;
-        ratio = Math.min(ratio, 10); // ограничиваем выбросы
+        ratio = Math.min(ratio, 10);
         wickRatios.push(ratio);
 
         opens.push(o);
@@ -424,31 +406,61 @@
       return `${m}m`;
     }
 
-    function getClosestCalendarEvent(){
-      if (!Array.isArray(CALENDAR_EVENTS) || CALENDAR_EVENTS.length === 0) return null;
+    async function fetchEconomicCalendar(){
+      const now = Date.now();
+
+      if (calendarCache.data && now - calendarCache.lastFetchTs < SETTINGS.CALENDAR_REFRESH_MS) {
+        return calendarCache.data;
+      }
+
+      if (!TE_API_KEY || TE_API_KEY === "YOUR_TRADING_ECONOMICS_API_KEY") {
+        return null;
+      }
+
+      const url = `https://api.tradingeconomics.com/calendar?c=${encodeURIComponent(TE_API_KEY)}`;
+
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) {
+        throw new Error(`Trading Economics calendar: ${res.status}`);
+      }
+
+      const data = await res.json();
+      calendarCache.data = data;
+      calendarCache.lastFetchTs = now;
+      return data;
+    }
+
+    function normalizeCalendarEvent(e){
+      return {
+        name: e.Event || e.Category || "Unknown event",
+        country: e.Country || "",
+        importance: Number(e.Importance || 0),
+        date: e.Date,
+        dateMs: e.Date ? new Date(e.Date).getTime() : null
+      };
+    }
+
+    function getClosestHighImpactEvent(events){
+      if (!Array.isArray(events) || !events.length) return null;
 
       const now = Date.now();
 
-      const upcoming = CALENDAR_EVENTS
-        .map(ev => ({
-          ...ev,
-          startMs: new Date(ev.start).getTime(),
-          endMs: new Date(ev.end).getTime()
-        }))
-        .filter(ev => ev.endMs > now)
-        .sort((a,b) => a.startMs - b.startMs);
+      const filtered = events
+        .map(normalizeCalendarEvent)
+        .filter(e => e.dateMs && e.importance >= 2 && e.dateMs > now - 60 * 60000)
+        .sort((a, b) => a.dateMs - b.dateMs);
 
-      if (!upcoming.length) return null;
+      if (!filtered.length) return null;
 
-      const ev = upcoming[0];
-      const startsInMs = ev.startMs - now;
-      const isLive = ev.startMs <= now && now <= ev.endMs;
+      const ev = filtered[0];
+      const startsInMs = ev.dateMs - now;
+      const isLive = startsInMs <= 0 && startsInMs >= -60 * 60000;
 
       return {
         ...ev,
-        isLive,
         startsInMs,
-        startsInText: isLive ? "LIVE NOW" : formatDistance(startsInMs)
+        startsInText: isLive ? "LIVE / recent" : formatDistance(startsInMs),
+        isLive
       };
     }
 
@@ -492,34 +504,41 @@
       };
     }
 
-    function computeCalendarEventRisk(){
-      const closest = getClosestCalendarEvent();
+    function computeCalendarEventRisk(events){
+      if (!events) {
+        return {
+          level: "UNKNOWN",
+          cls: "caution",
+          score: 0,
+          reasons: ["economic calendar disabled or unavailable"],
+          closest: null
+        };
+      }
+
+      const closest = getClosestHighImpactEvent(events);
 
       if (!closest) {
         return {
           level: "LOW",
           cls: "allow",
           score: 0,
-          reasons: ["близких событий нет"],
+          reasons: ["близких high-impact событий нет"],
           closest: null
         };
       }
 
-      const ms = closest.startsInMs;
-      const reasons = [];
+      const minutes = closest.startsInMs / 60000;
       let score = 0;
+      const reasons = [];
 
       if (closest.isLive) {
-        score = closest.severity === "HIGH" ? 90 : 70;
-        reasons.push(`${closest.name} сейчас идёт`);
-      } else if (ms <= 30 * 60000) {
-        score = closest.severity === "HIGH" ? 80 : 55;
+        score = closest.importance >= 3 ? 90 : 70;
+        reasons.push(`${closest.name} сейчас идёт/только вышло`);
+      } else if (minutes <= SETTINGS.CALENDAR_HIGH_WINDOW_MIN) {
+        score = closest.importance >= 3 ? 80 : 60;
         reasons.push(`${closest.name} через ${closest.startsInText}`);
-      } else if (ms <= 60 * 60000) {
-        score = closest.severity === "HIGH" ? 60 : 40;
-        reasons.push(`${closest.name} через ${closest.startsInText}`);
-      } else if (ms <= 120 * 60000) {
-        score = closest.severity === "HIGH" ? 35 : 20;
+      } else if (minutes <= SETTINGS.CALENDAR_MEDIUM_WINDOW_MIN) {
+        score = closest.importance >= 3 ? 40 : 25;
         reasons.push(`${closest.name} через ${closest.startsInText}`);
       } else {
         score = 0;
@@ -542,6 +561,7 @@
     function mergeEventRisk(domRisk, calRisk){
       const scores = [domRisk.score, calRisk.score].filter(x => typeof x === "number");
       const score = scores.length ? Math.max(...scores) : 0;
+
       const reasons = [
         ...(domRisk.score > 0 ? domRisk.reasons : []),
         ...(calRisk.score > 0 ? calRisk.reasons : [])
@@ -749,7 +769,7 @@
             <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
               <div class="label">Closest event</div>
               <div class="big ${eventRisk.cls}" style="margin-top:6px;">${closest ? closest.name : "None"}</div>
-              <div class="mini">${closest ? (closest.isLive ? "LIVE NOW" : `starts in: ${closest.startsInText}`) : "близких событий нет"}</div>
+              <div class="mini">${closest ? (closest.isLive ? "LIVE / recent" : `starts in: ${closest.startsInText}`) : "близких событий нет"}</div>
             </div>
           </div>
 
@@ -857,13 +877,14 @@
     async function refreshAll(){
       appStatus.textContent = "Loading...";
       try{
-        const [data, dom] = await Promise.all([
+        const [data, dom, cal] = await Promise.all([
           Promise.all(SYMBOLS.map(loadOne)),
-          fetchDominanceData().catch(() => null)
+          fetchDominanceData().catch(() => null),
+          fetchEconomicCalendar().catch(() => null)
         ]);
 
         const domRisk = computeDominanceEventRisk(dom);
-        const calRisk = computeCalendarEventRisk();
+        const calRisk = computeCalendarEventRisk(cal);
         const mergedEventRisk = mergeEventRisk(domRisk, calRisk);
 
         data.forEach(x => {
