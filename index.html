@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Crypto Chaos Terminal</title>
+  <title>Crypto Chaos Terminal Independent</title>
   <style>
     :root{
       --bg:#071226;
@@ -25,7 +25,7 @@
       color:var(--text);
       padding:18px 14px 28px;
     }
-    .wrap{max-width:980px;margin:0 auto}
+    .wrap{max-width:1100px;margin:0 auto}
     h1{
       margin:8px 0 6px;
       font-size:34px;
@@ -33,11 +33,7 @@
       font-weight:800;
       letter-spacing:-0.03em;
     }
-    .sub{
-      color:var(--muted);
-      font-size:18px;
-      margin-bottom:16px;
-    }
+    .sub{color:var(--muted);font-size:18px;margin-bottom:16px}
     .toolbar{
       display:flex;
       gap:10px;
@@ -55,24 +51,15 @@
       background:var(--btn);
       color:#081427;
       min-width:120px;
-      cursor:pointer;
     }
     select{
       background:var(--panel2);
       color:var(--text);
       border:1px solid var(--border);
     }
-    .status{
-      font-size:16px;
-      color:var(--muted);
-      margin:4px 0 14px;
-    }
-    .sectionTitle{
-      font-size:20px;
-      font-weight:800;
-      margin:18px 0 10px;
-    }
-    .topgrid, .grid{
+    .status{font-size:16px;color:var(--muted);margin:4px 0 14px}
+    .sectionTitle{font-size:20px;font-weight:800;margin:18px 0 10px}
+    .topgrid,.grid{
       display:grid;
       grid-template-columns:1fr;
       gap:12px;
@@ -90,46 +77,14 @@
       align-items:center;
       gap:10px;
     }
-    .coin{
-      font-size:26px;
-      font-weight:800;
-    }
-    .price{
-      font-size:20px;
-      font-weight:700;
-    }
-    .mode{
-      font-size:22px;
-      font-weight:800;
-      margin-top:10px;
-    }
-    .decision{
-      font-size:20px;
-      font-weight:800;
-      margin-top:8px;
-    }
-    .localDecision{
-      font-size:18px;
-      font-weight:800;
-      margin-top:6px;
-    }
-    .gate{
-      font-size:30px;
-      font-weight:900;
-      margin-top:6px;
-    }
-    .chaosLevel{
-      font-size:30px;
-      font-weight:900;
-      margin-top:6px;
-    }
-    .up{color:var(--ok)}
-    .down{color:var(--bad)}
-    .range{color:var(--warn)}
-    .chaos{color:var(--bad)}
-    .allow{color:var(--ok)}
-    .caution{color:var(--warn)}
-    .skip{color:var(--bad)}
+    .coin{font-size:26px;font-weight:800}
+    .price{font-size:20px;font-weight:700}
+    .mode{font-size:22px;font-weight:800;margin-top:10px}
+    .gate{font-size:28px;font-weight:900;margin-top:6px}
+    .big{font-size:24px;font-weight:800}
+    .chaosLevel{font-size:30px;font-weight:900;margin-top:6px}
+    .label{color:var(--muted);font-size:14px}
+    .mini{font-size:15px;color:var(--muted);margin-top:8px;line-height:1.4}
     .meta{
       display:flex;
       gap:12px;
@@ -138,20 +93,13 @@
       font-size:14px;
       margin-top:10px;
     }
-    .label{
-      color:var(--muted);
-      font-size:14px;
-    }
-    .big{
-      font-size:24px;
-      font-weight:800;
-    }
-    .mini{
-      font-size:15px;
-      color:var(--muted);
-      margin-top:8px;
-      line-height:1.4;
-    }
+    .up{color:var(--ok)}
+    .down{color:var(--bad)}
+    .range{color:var(--warn)}
+    .chaos{color:var(--bad)}
+    .allow{color:var(--ok)}
+    .caution{color:var(--warn)}
+    .skip{color:var(--bad)}
     .split{
       display:grid;
       grid-template-columns:1fr 1fr;
@@ -162,7 +110,12 @@
       grid-template-columns:1fr 1fr 1fr;
       gap:12px;
     }
-    .warnbox, .dangerbox, .infobox, .okbox{
+    .split4{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr 1fr;
+      gap:12px;
+    }
+    .warnbox,.dangerbox,.infobox,.okbox{
       border-radius:18px;
       padding:12px;
       margin-top:10px;
@@ -183,18 +136,21 @@
       border:1px solid rgba(23,201,100,0.35);
       background:rgba(23,201,100,0.08);
     }
+    @media (max-width:980px){
+      .split4{grid-template-columns:1fr 1fr}
+    }
     @media (max-width:880px){
       .split3{grid-template-columns:1fr}
     }
     @media (max-width:640px){
-      .split{grid-template-columns:1fr}
+      .split,.split4{grid-template-columns:1fr}
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>Crypto Chaos Terminal</h1>
-    <div class="sub">BTC • ETH • SOL • XRP • 1m candles • окно 30 минут • BTC.D / USDT.D / Polymarket / Manual Macro Calendar</div>
+    <div class="sub">BTC • ETH • SOL • XRP • независимая оценка каждой монеты • общее состояние рынка</div>
 
     <div class="toolbar">
       <button id="refreshBtn">Refresh</button>
@@ -211,7 +167,7 @@
 
     <div class="topgrid" id="topCards"></div>
 
-    <div class="sectionTitle">BTC filter + монеты</div>
+    <div class="sectionTitle">Монеты</div>
     <div class="grid" id="coinCards"></div>
   </div>
 
@@ -227,48 +183,35 @@
       BTC_DOM_HIGH_DELTA: 0.15
     };
 
-    const EVENT_SETTINGS = {
-      POLY_REFRESH_MS: 60000,
-      CAL_REFRESH_MS: 60000,
-      POLY_KEYWORDS: [
-        "fed",
-        "fomc",
-        "powell",
-        "cpi",
-        "pce",
-        "inflation",
-        "nfp",
-        "payrolls",
-        "jobless",
-        "interest rate",
-        "recession",
-        "iran",
-        "israel",
-        "oil",
-        "war",
-        "strike",
-        "sanctions",
-        "sec",
-        "etf",
-        "binance",
-        "coinbase",
-        "hack"
-      ],
-      HIGH_WINDOW_MIN: 90,
-      MEDIUM_WINDOW_MIN: 240
-    };
-
-    // Обновляй этот список вручную.
-    // Формат времени: UTC
-    const MANUAL_MACRO_EVENTS = [
-      { title: "US CPI", datetime: "2026-03-20T12:30:00Z", impact: "HIGH" },
-      { title: "FOMC Rate Decision", datetime: "2026-03-25T18:00:00Z", impact: "HIGH" },
-      { title: "Powell Speech", datetime: "2026-03-25T18:30:00Z", impact: "HIGH" },
-      { title: "Non-Farm Payrolls", datetime: "2026-04-03T12:30:00Z", impact: "HIGH" },
-      { title: "PCE", datetime: "2026-03-27T12:30:00Z", impact: "HIGH" },
-      { title: "PPI", datetime: "2026-03-21T12:30:00Z", impact: "MEDIUM" },
-      { title: "Retail Sales", datetime: "2026-03-22T12:30:00Z", impact: "MEDIUM" },
-      { title: "Jobless Claims", datetime: "2026-03-19T12:30:00Z", impact: "MEDIUM" }
+    const CALENDAR_EVENTS = [
+      {
+        name: "FOMC Meeting",
+        category: "macro",
+        severity: "HIGH",
+        start: "2026-03-18T18:00:00Z",
+        end: "2026-03-18T19:00:00Z"
+      },
+      {
+        name: "FOMC Press Conference",
+        category: "macro",
+        severity: "HIGH",
+        start: "2026-03-18T18:30:00Z",
+        end: "2026-03-18T19:30:00Z"
+      },
+      {
+        name: "Employment Situation",
+        category: "macro",
+        severity: "HIGH",
+        start: "2026-04-03T12:30:00Z",
+        end: "2026-04-03T13:30:00Z"
+      },
+      {
+        name: "Consumer Price Index",
+        category: "macro",
+        severity: "HIGH",
+        start: "2026-04-10T12:30:00Z",
+        end: "2026-04-10T13:30:00Z"
+      }
     ];
 
     const appStatus = document.getElementById("appStatus");
@@ -286,21 +229,6 @@
       baseline: null
     };
 
-    let eventCache = {
-      poly: { data: null, ts: 0 }
-    };
-
-    function modeClass(state, direction){
-      if (state === "TREND") return direction === "UP" ? "up" : "down";
-      if (state === "CHAOS") return "chaos";
-      return "range";
-    }
-
-    function modeText(state, direction){
-      if (state === "TREND") return `TREND ${direction}`;
-      return state;
-    }
-
     function clamp(value, min, max){
       return Math.max(min, Math.min(max, value));
     }
@@ -312,19 +240,15 @@
       return "→";
     }
 
-    function normalizeText(s){
-      return String(s || "").toLowerCase();
+    function modeClass(state, direction){
+      if (state === "TREND") return direction === "UP" ? "up" : "down";
+      if (state === "CHAOS") return "chaos";
+      return "range";
     }
 
-    function containsAny(text, keywords){
-      const t = normalizeText(text);
-      return keywords.some(k => t.includes(k.toLowerCase()));
-    }
-
-    function minutesUntil(dateStr){
-      const target = new Date(dateStr).getTime();
-      const now = Date.now();
-      return (target - now) / (1000 * 60);
+    function modeText(state, direction){
+      if (state === "TREND") return `TREND ${direction}`;
+      return state;
     }
 
     function classify(candles){
@@ -344,7 +268,7 @@
         const wick = Math.max(0, totalRange - body);
 
         let ratio = body > 0 ? wick / body : 10;
-        ratio = Math.min(ratio, 10);
+        ratio = Math.min(ratio, 10); // ограничиваем выбросы
         wickRatios.push(ratio);
 
         opens.push(o);
@@ -438,47 +362,6 @@
       };
     }
 
-    function localDecision(coin){
-      if (coin.state === "CHAOS") {
-        return { text:"LOCAL SKIP", cls:"skip", reason:"сама монета в хаосе" };
-      }
-      if (coin.chaosRisk === "HIGH") {
-        return { text:"LOCAL SKIP", cls:"skip", reason:"у монеты высокий риск хаоса" };
-      }
-      if (coin.state === "TREND") {
-        return { text:`LOCAL ALLOW ${coin.direction}`, cls:"allow", reason:"сама монета даёт тренд" };
-      }
-      if (coin.state === "RANGE" && coin.chaosRisk === "LOW") {
-        return { text:"LOCAL CAUTION", cls:"caution", reason:"монета в range без сильной деградации" };
-      }
-      return { text:"LOCAL SKIP", cls:"skip", reason:"локально edge слабый" };
-    }
-
-    function btcAwareDecision(btc, coin){
-      if (btc.state === "CHAOS") {
-        return { text:"BTC FILTER: SKIP", cls:"skip", reason:"BTC в хаосе" };
-      }
-      if (btc.chaosRisk === "HIGH") {
-        return { text:"BTC FILTER: SKIP", cls:"skip", reason:"BTC близок к хаосу" };
-      }
-      if (coin.state === "CHAOS") {
-        return { text:"BTC FILTER: SKIP", cls:"skip", reason:"монета в хаосе" };
-      }
-      if (coin.chaosRisk === "HIGH") {
-        return { text:"BTC FILTER: SKIP", cls:"skip", reason:"монета деградирует" };
-      }
-      if (btc.state === "TREND" && coin.state === "TREND" && btc.direction === coin.direction) {
-        return { text:`BTC FILTER: ALLOW ${coin.direction}`, cls:"allow", reason:"BTC и монета согласованы" };
-      }
-      if (btc.state === "TREND" && coin.state === "TREND" && btc.direction !== coin.direction) {
-        return { text:"BTC FILTER: CAUTION", cls:"caution", reason:"монета против BTC" };
-      }
-      if (btc.state === "RANGE" || coin.state === "RANGE") {
-        return { text:"BTC FILTER: CAUTION", cls:"caution", reason:"переходный режим" };
-      }
-      return { text:"BTC FILTER: SKIP", cls:"skip", reason:"нет edge" };
-    }
-
     async function fetchDominanceData(){
       const now = Date.now();
 
@@ -524,8 +407,7 @@
         btcDelta,
         usdtDelta,
         btcArrow: formatArrow(btcDelta),
-        usdtArrow: formatArrow(usdtDelta),
-        baselineTs: dominanceCache.baseline.ts
+        usdtArrow: formatArrow(usdtDelta)
       };
 
       dominanceCache.data = data;
@@ -533,145 +415,50 @@
       return data;
     }
 
-    async function fetchPolymarketRisk(){
-      const now = Date.now();
-      if (eventCache.poly.data && now - eventCache.poly.ts < EVENT_SETTINGS.POLY_REFRESH_MS) {
-        return eventCache.poly.data;
-      }
-
-      const url = "https://gamma-api.polymarket.com/events?active=true&closed=false&limit=100";
-      const r = await fetch(url, { cache: "no-store" });
-      if (!r.ok) throw new Error(`Polymarket: ${r.status}`);
-
-      const events = await r.json();
-      const matched = [];
-
-      for (const ev of events) {
-        const title = ev.title || ev.slug || "";
-        const description = ev.description || "";
-        const endDate = ev.endDate || ev.end_date || ev.endDateIso || ev.end_time || null;
-        const text = `${title} ${description}`;
-
-        if (!containsAny(text, EVENT_SETTINGS.POLY_KEYWORDS)) continue;
-
-        const mins = endDate ? minutesUntil(endDate) : null;
-        matched.push({ title, endDate, mins });
-      }
-
-      let score = 0;
-      const reasons = [];
-
-      const veryNear = matched.filter(x => x.mins !== null && x.mins >= 0 && x.mins <= EVENT_SETTINGS.HIGH_WINDOW_MIN);
-      const near = matched.filter(x => x.mins !== null && x.mins > EVENT_SETTINGS.HIGH_WINDOW_MIN && x.mins <= EVENT_SETTINGS.MEDIUM_WINDOW_MIN);
-
-      if (veryNear.length >= 1) {
-        score += 45;
-        reasons.push(`Polymarket: близкие event markets (${veryNear.length})`);
-      } else if (near.length >= 1) {
-        score += 20;
-        reasons.push(`Polymarket: события сегодня (${near.length})`);
-      }
-
-      if (matched.length >= 5) {
-        score += 20;
-        reasons.push(`Polymarket: много активных risk markets (${matched.length})`);
-      } else if (matched.length >= 2) {
-        score += 10;
-        reasons.push(`Polymarket: есть risk markets (${matched.length})`);
-      }
-
-      score = Math.min(score, 100);
-
-      let level = "LOW";
-      let cls = "allow";
-      if (score >= 50) {
-        level = "HIGH";
-        cls = "skip";
-      } else if (score >= 20) {
-        level = "MEDIUM";
-        cls = "caution";
-      }
-
-      const data = {
-        source: "Polymarket",
-        level,
-        cls,
-        score,
-        reasons: reasons.length ? reasons : ["Polymarket risk markets не давят"],
-        matched: matched.slice(0, 10)
-      };
-
-      eventCache.poly = { data, ts: now };
-      return data;
+    function formatDistance(ms){
+      const abs = Math.abs(ms);
+      const totalMin = Math.floor(abs / 60000);
+      const h = Math.floor(totalMin / 60);
+      const m = totalMin % 60;
+      if (h > 0) return `${h}h ${m}m`;
+      return `${m}m`;
     }
 
-    function fetchEconomicCalendarRiskNoKey(){
-      const upcoming = [];
+    function getClosestCalendarEvent(){
+      if (!Array.isArray(CALENDAR_EVENTS) || CALENDAR_EVENTS.length === 0) return null;
 
-      for (const ev of MANUAL_MACRO_EVENTS) {
-        const mins = minutesUntil(ev.datetime);
-        if (mins < 0) continue;
+      const now = Date.now();
 
-        upcoming.push({
-          event: ev.title,
-          date: ev.datetime,
-          mins,
-          impact: ev.impact
-        });
-      }
+      const upcoming = CALENDAR_EVENTS
+        .map(ev => ({
+          ...ev,
+          startMs: new Date(ev.start).getTime(),
+          endMs: new Date(ev.end).getTime()
+        }))
+        .filter(ev => ev.endMs > now)
+        .sort((a,b) => a.startMs - b.startMs);
 
-      upcoming.sort((a, b) => a.mins - b.mins);
+      if (!upcoming.length) return null;
 
-      let score = 0;
-      const reasons = [];
-
-      const highSoon = upcoming.filter(x => x.impact === "HIGH" && x.mins <= 90);
-      const highToday = upcoming.filter(x => x.impact === "HIGH" && x.mins > 90 && x.mins <= 240);
-      const medSoon = upcoming.filter(x => x.impact === "MEDIUM" && x.mins <= 90);
-
-      if (highSoon.length >= 1) {
-        score += 60;
-        reasons.push(`calendar: high-impact скоро (${highSoon[0].event})`);
-      } else if (highToday.length >= 1) {
-        score += 30;
-        reasons.push(`calendar: high-impact сегодня (${highToday[0].event})`);
-      }
-
-      if (medSoon.length >= 1) {
-        score += 15;
-        reasons.push(`calendar: medium-impact скоро (${medSoon[0].event})`);
-      }
-
-      score = Math.min(score, 100);
-
-      let level = "LOW";
-      let cls = "allow";
-
-      if (score >= 50) {
-        level = "HIGH";
-        cls = "skip";
-      } else if (score >= 20) {
-        level = "MEDIUM";
-        cls = "caution";
-      }
+      const ev = upcoming[0];
+      const startsInMs = ev.startMs - now;
+      const isLive = ev.startMs <= now && now <= ev.endMs;
 
       return {
-        source: "Manual Calendar",
-        level,
-        cls,
-        score,
-        reasons: reasons.length ? reasons : ["ближайших сильных релизов не задано"],
-        upcoming: upcoming.slice(0, 10)
+        ...ev,
+        isLive,
+        startsInMs,
+        startsInText: isLive ? "LIVE NOW" : formatDistance(startsInMs)
       };
     }
 
-    function computeDominanceRisk(dom){
+    function computeDominanceEventRisk(dom){
       if (!dom) {
         return {
           level: "UNKNOWN",
           cls: "caution",
-          score: 20,
-          reasons: ["нет dominance data"]
+          score: 0,
+          reasons: ["dominance data unavailable"]
         };
       }
 
@@ -694,9 +481,75 @@
         reasons.push(`BTC.D растёт (${dom.btcDelta.toFixed(2)} п.п.)`);
       }
 
+      if (score >= 50) return { level:"HIGH", cls:"skip", score, reasons };
+      if (score >= 20) return { level:"MEDIUM", cls:"caution", score, reasons };
+
+      return {
+        level: "LOW",
+        cls: "allow",
+        score,
+        reasons: reasons.length ? reasons : ["dominance спокойная"]
+      };
+    }
+
+    function computeCalendarEventRisk(){
+      const closest = getClosestCalendarEvent();
+
+      if (!closest) {
+        return {
+          level: "LOW",
+          cls: "allow",
+          score: 0,
+          reasons: ["близких событий нет"],
+          closest: null
+        };
+      }
+
+      const ms = closest.startsInMs;
+      const reasons = [];
+      let score = 0;
+
+      if (closest.isLive) {
+        score = closest.severity === "HIGH" ? 90 : 70;
+        reasons.push(`${closest.name} сейчас идёт`);
+      } else if (ms <= 30 * 60000) {
+        score = closest.severity === "HIGH" ? 80 : 55;
+        reasons.push(`${closest.name} через ${closest.startsInText}`);
+      } else if (ms <= 60 * 60000) {
+        score = closest.severity === "HIGH" ? 60 : 40;
+        reasons.push(`${closest.name} через ${closest.startsInText}`);
+      } else if (ms <= 120 * 60000) {
+        score = closest.severity === "HIGH" ? 35 : 20;
+        reasons.push(`${closest.name} через ${closest.startsInText}`);
+      } else {
+        score = 0;
+        reasons.push(`ближайшее событие: ${closest.name} через ${closest.startsInText}`);
+      }
+
       let level = "LOW";
       let cls = "allow";
-      if (score >= 50) {
+      if (score >= 60) {
+        level = "HIGH";
+        cls = "skip";
+      } else if (score >= 20) {
+        level = "MEDIUM";
+        cls = "caution";
+      }
+
+      return { level, cls, score, reasons, closest };
+    }
+
+    function mergeEventRisk(domRisk, calRisk){
+      const scores = [domRisk.score, calRisk.score].filter(x => typeof x === "number");
+      const score = scores.length ? Math.max(...scores) : 0;
+      const reasons = [
+        ...(domRisk.score > 0 ? domRisk.reasons : []),
+        ...(calRisk.score > 0 ? calRisk.reasons : [])
+      ];
+
+      let level = "LOW";
+      let cls = "allow";
+      if (score >= 60) {
         level = "HIGH";
         cls = "skip";
       } else if (score >= 20) {
@@ -707,85 +560,58 @@
       return {
         level,
         cls,
-        score: Math.min(score, 100),
-        reasons: reasons.length ? reasons : ["dominance спокойная"]
-      };
-    }
-
-    function combineExternalEventRisk(polyRisk, calRisk){
-      const score = Math.max(polyRisk?.score || 0, calRisk?.score || 0);
-      const reasons = [
-        ...(polyRisk?.reasons || []),
-        ...(calRisk?.reasons || [])
-      ];
-
-      let level = "LOW";
-      let cls = "allow";
-
-      if ((polyRisk && polyRisk.level === "HIGH") || (calRisk && calRisk.level === "HIGH") || score >= 50) {
-        level = "HIGH";
-        cls = "skip";
-      } else if ((polyRisk && polyRisk.level === "MEDIUM") || (calRisk && calRisk.level === "MEDIUM") || score >= 20) {
-        level = "MEDIUM";
-        cls = "caution";
-      }
-
-      return {
-        level,
-        cls,
         score,
-        reasons: reasons.length ? reasons : ["external event risk низкий"],
-        polyRisk,
-        calRisk
+        reasons: reasons.length ? reasons : ["внешний событийный риск не подтверждён"],
+        closest: calRisk.closest || null
       };
     }
 
-    function computeTechnicalChaos(btc){
+    function computeTechnicalChaos(asset){
       let score = 0;
       const reasons = [];
 
-      if (btc.state === "CHAOS") {
+      if (asset.state === "CHAOS") {
         score += 40;
-        reasons.push("BTC = CHAOS");
+        reasons.push(`${asset.symbol.replace("USDT","")} = CHAOS`);
       }
-      if (btc.chaosRisk === "HIGH") {
+      if (asset.chaosRisk === "HIGH") {
         score += 30;
-        reasons.push("BTC chaos risk = HIGH");
-      } else if (btc.chaosRisk === "MEDIUM") {
+        reasons.push("chaos risk = HIGH");
+      } else if (asset.chaosRisk === "MEDIUM") {
         score += 15;
-        reasons.push("BTC chaos risk = MEDIUM");
+        reasons.push("chaos risk = MEDIUM");
       }
 
-      if (btc.changes > btc.window * 0.45) {
+      if (asset.changes > asset.window * 0.45) {
         score += 20;
         reasons.push("слишком много разворотов");
-      } else if (btc.changes > btc.window * 0.35) {
+      } else if (asset.changes > asset.window * 0.35) {
         score += 10;
         reasons.push("разворотов выше нормы");
       }
 
-      if (btc.dominantShareRaw < 0.58) {
+      if (asset.dominantShareRaw < 0.58) {
         score += 20;
         reasons.push("нет доминирования");
-      } else if (btc.dominantShareRaw < 0.62) {
+      } else if (asset.dominantShareRaw < 0.62) {
         score += 10;
         reasons.push("слабое доминирование");
       }
 
-      if (btc.avgWickRatioRaw > 2.5) {
+      if (asset.avgWickRatioRaw > 2.5) {
         score += 20;
         reasons.push("грязные свечи");
-      } else if (btc.avgWickRatioRaw > 1.8) {
+      } else if (asset.avgWickRatioRaw > 1.8) {
         score += 10;
         reasons.push("тени выше нормы");
       }
 
-      if (btc.maxRun < 3) {
+      if (asset.maxRun < 3) {
         score += 15;
         reasons.push("нет серии");
       }
 
-      if (btc.netMoveRaw < 0.0025) {
+      if (asset.netMoveRaw < 0.0025) {
         score += 15;
         reasons.push("нет импульса");
       }
@@ -805,41 +631,12 @@
       return { level, cls, score, reasons };
     }
 
-    function computeFinalEventRisk(dominanceRisk, externalRisk){
-      const score = Math.max(dominanceRisk.score || 0, externalRisk.score || 0);
-      const reasons = [
-        ...(dominanceRisk.reasons || []),
-        ...(externalRisk.reasons || [])
-      ];
-
-      let level = "LOW";
-      let cls = "allow";
-
-      if (dominanceRisk.level === "HIGH" || externalRisk.level === "HIGH" || score >= 50) {
-        level = "HIGH";
-        cls = "skip";
-      } else if (dominanceRisk.level === "MEDIUM" || externalRisk.level === "MEDIUM" || score >= 20) {
-        level = "MEDIUM";
-        cls = "caution";
-      }
-
-      return {
-        level,
-        cls,
-        score,
-        reasons,
-        polyRisk: externalRisk.polyRisk,
-        calRisk: externalRisk.calRisk
-      };
-    }
-
     function computeFinalChaos(technical, eventRisk){
-      const reasons = [...technical.reasons, ...eventRisk.reasons];
       const score = clamp(Math.max(technical.score, eventRisk.score), 0, 100);
+      const reasons = [...technical.reasons, ...eventRisk.reasons];
 
       let level = "LOW";
       let cls = "allow";
-
       if (technical.level === "HIGH" || eventRisk.level === "HIGH" || score >= 60) {
         level = "HIGH";
         cls = "skip";
@@ -873,68 +670,96 @@
       };
     }
 
-    function renderTop(btc, data, dom, technical, eventRisk, finalChaos, gate){
-      const localTradable = data.filter(
-        x => x.symbol !== "BTCUSDT" && x.local.text.startsWith("LOCAL ALLOW")
-      );
-      const btcTradable = data.filter(
-        x => x.symbol !== "BTCUSDT" && x.btcAware.text.startsWith("BTC FILTER: ALLOW")
-      );
+    function computeOverallMarketChaos(data){
+      const scores = data.map(x => x.finalChaos.score);
+      const avgScore = scores.reduce((a,b)=>a+b,0) / Math.max(1, scores.length);
+      const highCount = data.filter(x => x.finalChaos.level === "HIGH").length;
+      const mediumCount = data.filter(x => x.finalChaos.level === "MEDIUM").length;
+      const lowCount = data.filter(x => x.finalChaos.level === "LOW").length;
 
-      const gateBoxClass =
-        gate.cls === "allow" ? "okbox" :
-        gate.cls === "caution" ? "warnbox" : "dangerbox";
+      let level = "LOW";
+      let cls = "allow";
 
-      const polyText = eventRisk.polyRisk
-        ? `${eventRisk.polyRisk.level} · ${eventRisk.polyRisk.reasons.join(" · ")}`
-        : "нет данных";
+      if (highCount >= 2 || avgScore >= 60) {
+        level = "HIGH";
+        cls = "skip";
+      } else if (highCount >= 1 || mediumCount >= 2 || avgScore >= 30) {
+        level = "MEDIUM";
+        cls = "caution";
+      }
 
-      const calText = eventRisk.calRisk
-        ? `${eventRisk.calRisk.level} · ${eventRisk.calRisk.reasons.join(" · ")}`
-        : "нет данных";
+      const reasons = [];
+      if (highCount >= 2) reasons.push("минимум 2 монеты в HIGH chaos");
+      if (highCount >= 1 && mediumCount >= 1) reasons.push("часть рынка уже сломана");
+      if (avgScore >= 60) reasons.push(`средний chaos score ${avgScore.toFixed(0)}`);
+      else if (avgScore >= 30) reasons.push(`средний chaos score ${avgScore.toFixed(0)}`);
+      if (!reasons.length) reasons.push("большая часть монет выглядит спокойно");
+
+      return {
+        level,
+        cls,
+        score: Math.round(avgScore),
+        highCount,
+        mediumCount,
+        lowCount,
+        reasons
+      };
+    }
+
+    function renderTop(data, dom, eventRisk, overall){
+      const startable = data.filter(x => x.gate.text === "START OK");
+      const caution = data.filter(x => x.gate.text === "CAUTION");
+      const blocked = data.filter(x => x.gate.text === "DO NOT START");
+      const closest = eventRisk.closest;
 
       topCards.innerHTML = `
         <div class="card">
           <div class="headline">
             <div>
-              <div class="label">Финальный gate для cbit</div>
-              <div class="gate ${gate.cls}">${gate.text}</div>
+              <div class="label">Общая оценка хаоса на рынке</div>
+              <div class="chaosLevel ${overall.cls}">${overall.level}</div>
             </div>
             <div style="text-align:right">
-              <div class="label">Итоговый уровень хаоса</div>
-              <div class="chaosLevel ${finalChaos.cls}">${finalChaos.level}</div>
+              <div class="label">Средний chaos score</div>
+              <div class="big ${overall.cls}">${overall.score}/100</div>
             </div>
           </div>
 
-          <div class="${gateBoxClass}">
-            <div class="label">Причина решения</div>
-            <div class="mini">${gate.reason}</div>
+          <div class="${overall.cls === 'allow' ? 'okbox' : overall.cls === 'caution' ? 'warnbox' : 'dangerbox'}">
+            <div class="label">Вывод по рынку</div>
+            <div class="mini">${overall.reasons.join(" · ")}</div>
+          </div>
+
+          <div class="split4" style="margin-top:12px;">
+            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
+              <div class="label">START OK</div>
+              <div class="big allow" style="margin-top:6px;">${startable.length}</div>
+              <div class="mini">${startable.length ? startable.map(x => x.symbol.replace("USDT","")).join(", ") : "нет"}</div>
+            </div>
+            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
+              <div class="label">CAUTION</div>
+              <div class="big caution" style="margin-top:6px;">${caution.length}</div>
+              <div class="mini">${caution.length ? caution.map(x => x.symbol.replace("USDT","")).join(", ") : "нет"}</div>
+            </div>
+            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
+              <div class="label">DO NOT START</div>
+              <div class="big skip" style="margin-top:6px;">${blocked.length}</div>
+              <div class="mini">${blocked.length ? blocked.map(x => x.symbol.replace("USDT","")).join(", ") : "нет"}</div>
+            </div>
+            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
+              <div class="label">Closest event</div>
+              <div class="big ${eventRisk.cls}" style="margin-top:6px;">${closest ? closest.name : "None"}</div>
+              <div class="mini">${closest ? (closest.isLive ? "LIVE NOW" : `starts in: ${closest.startsInText}`) : "близких событий нет"}</div>
+            </div>
           </div>
 
           <div class="split3" style="margin-top:12px;">
-            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
-              <div class="label">Technical chaos</div>
-              <div class="big ${technical.cls}" style="margin-top:6px;">${technical.level}</div>
-              <div class="mini">score: ${technical.score}/100</div>
-              <div class="mini">${technical.reasons.length ? technical.reasons.join(" · ") : "структура чистая"}</div>
-            </div>
-
             <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
               <div class="label">Event risk</div>
               <div class="big ${eventRisk.cls}" style="margin-top:6px;">${eventRisk.level}</div>
               <div class="mini">score: ${eventRisk.score}/100</div>
-              <div class="mini">${eventRisk.reasons.length ? eventRisk.reasons.join(" · ") : "внешний фон спокойный"}</div>
+              <div class="mini">${eventRisk.reasons.join(" · ")}</div>
             </div>
-
-            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
-              <div class="label">Final chaos</div>
-              <div class="big ${finalChaos.cls}" style="margin-top:6px;">${finalChaos.level}</div>
-              <div class="mini">score: ${finalChaos.score}/100</div>
-              <div class="mini">используй это как главный индикатор запуска cbit</div>
-            </div>
-          </div>
-
-          <div class="split3" style="margin-top:12px;">
             <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
               <div class="label">BTC.D</div>
               <div class="big ${dom && dom.btcDelta > 0 ? "range" : dom && dom.btcDelta < 0 ? "up" : "caution"}" style="margin-top:6px;">
@@ -942,7 +767,6 @@
               </div>
               <div class="mini">${dom ? `session delta: ${dom.btcDelta.toFixed(2)} п.п.` : "нет данных"}</div>
             </div>
-
             <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
               <div class="label">USDT.D</div>
               <div class="big ${dom && dom.usdtDelta > 0 ? "chaos" : dom && dom.usdtDelta < 0 ? "up" : "caution"}" style="margin-top:6px;">
@@ -950,108 +774,74 @@
               </div>
               <div class="mini">${dom ? `session delta: ${dom.usdtDelta.toFixed(2)} п.п.` : "нет данных"}</div>
             </div>
-
-            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
-              <div class="label">Dominance logic</div>
-              <div class="mini">
-                BTC.D ↑ = альты слабее<br/>
-                USDT.D ↑ = risk-off / деньги в кэш
-              </div>
-            </div>
           </div>
-
-          <div class="split" style="margin-top:12px">
-            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
-              <div class="label">Polymarket risk</div>
-              <div class="mini">${polyText}</div>
-            </div>
-
-            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
-              <div class="label">Manual macro calendar risk</div>
-              <div class="mini">${calText}</div>
-            </div>
-          </div>
-
-          <div class="split" style="margin-top:12px">
-            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
-              <div class="label">BTC как глобальный фильтр</div>
-              <div class="big ${modeClass(btc.state, btc.direction)}" style="margin-top:6px;">${modeText(btc.state, btc.direction)}</div>
-              <div class="mini">
-                net move: ${btc.netMovePct}% · run: ${btc.maxRun} · changes: ${btc.changes} ·
-                dominance: ${btc.dominantShare}% · wick/body: ${btc.avgWickRatio}
-              </div>
-            </div>
-
-            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
-              <div class="label">Отдельно по монетам</div>
-              <div class="mini">${localTradable.length ? localTradable.map(x => x.symbol.replace("USDT","")).join(", ") : "нет явных локальных трендов"}</div>
-              <div class="label" style="margin-top:10px;">С учётом BTC</div>
-              <div class="mini">${btcTradable.length ? btcTradable.map(x => x.symbol.replace("USDT","")).join(", ") : "ничего не подтверждено BTC"}</div>
-            </div>
-          </div>
-
-          ${btc.predictorSignals.length ? `
-            <div class="warnbox">
-              <div class="label">Сигналы деградации BTC</div>
-              <div class="mini">${btc.predictorSignals.join(" · ")}</div>
-            </div>
-          ` : ``}
         </div>
       `;
     }
 
-    function renderCoins(data){
+    function renderCoinsIndependent(data){
       coinCards.innerHTML = "";
 
-      data
-        .filter(x => x.symbol !== "BTCUSDT")
-        .forEach(item => {
-          const warningBox = item.predictorSignals.length
-            ? `
-              <div class="${item.chaosRisk === 'HIGH' ? 'dangerbox' : 'warnbox'}">
-                <div class="label">Предиктор хаоса монеты</div>
-                <div class="mini">${item.chaosRisk} · ${item.predictorSignals.join(" · ")}</div>
-              </div>
-            `
-            : "";
-
-          const btcBoxClass =
-            item.btcAware.cls === "skip" ? "dangerbox" :
-            item.btcAware.cls === "caution" ? "warnbox" : "infobox";
-
-          const div = document.createElement("div");
-          div.className = "card";
-          div.innerHTML = `
-            <div class="headline">
-              <div class="coin">${item.symbol.replace("USDT","")}</div>
-              <div class="price">${item.price.toFixed(item.symbol === "XRPUSDT" ? 4 : 2)}</div>
+      data.forEach(item => {
+        const warningBox = item.predictorSignals.length
+          ? `
+            <div class="${item.chaosRisk === 'HIGH' ? 'dangerbox' : 'warnbox'}">
+              <div class="label">Предиктор хаоса</div>
+              <div class="mini">${item.chaosRisk} · ${item.predictorSignals.join(" · ")}</div>
             </div>
+          `
+          : "";
 
-            <div class="mode ${modeClass(item.state, item.direction)}">${modeText(item.state, item.direction)}</div>
-            <div class="meta">
-              <span>net move: ${item.netMovePct}%</span>
-              <span>run: ${item.maxRun}</span>
-              <span>changes: ${item.changes}</span>
-              <span>dominance: ${item.dominantShare}%</span>
-              <span>wick/body: ${item.avgWickRatio}</span>
+        const gateBoxClass =
+          item.gate.cls === "allow" ? "okbox" :
+          item.gate.cls === "caution" ? "warnbox" : "dangerbox";
+
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `
+          <div class="headline">
+            <div class="coin">${item.symbol.replace("USDT","")}</div>
+            <div class="price">${item.price.toFixed(item.symbol === "XRPUSDT" ? 4 : 2)}</div>
+          </div>
+
+          <div class="mode ${modeClass(item.state, item.direction)}">${modeText(item.state, item.direction)}</div>
+
+          <div class="split3" style="margin-top:12px;">
+            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
+              <div class="label">Technical chaos</div>
+              <div class="big ${item.technical.cls}" style="margin-top:6px;">${item.technical.level}</div>
+              <div class="mini">score: ${item.technical.score}/100</div>
             </div>
-
-            <div class="infobox">
-              <div class="label">Отдельно по монете</div>
-              <div class="localDecision ${item.local.cls}">${item.local.text}</div>
-              <div class="mini">${item.local.reason}</div>
+            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
+              <div class="label">Event risk</div>
+              <div class="big ${item.eventRisk.cls}" style="margin-top:6px;">${item.eventRisk.level}</div>
+              <div class="mini">score: ${item.eventRisk.score}/100</div>
             </div>
-
-            <div class="${btcBoxClass}">
-              <div class="label">С учётом BTC</div>
-              <div class="decision ${item.btcAware.cls}">${item.btcAware.text}</div>
-              <div class="mini">${item.btcAware.reason}</div>
+            <div class="card" style="padding:12px;border-radius:18px;background:rgba(22,38,75,0.85)">
+              <div class="label">Final chaos</div>
+              <div class="big ${item.finalChaos.cls}" style="margin-top:6px;">${item.finalChaos.level}</div>
+              <div class="mini">score: ${item.finalChaos.score}/100</div>
             </div>
+          </div>
 
-            ${warningBox}
-          `;
-          coinCards.appendChild(div);
-        });
+          <div class="${gateBoxClass}">
+            <div class="label">Решение по монете</div>
+            <div class="gate ${item.gate.cls}">${item.gate.text}</div>
+            <div class="mini">${item.gate.reason}</div>
+          </div>
+
+          <div class="meta">
+            <span>net move: ${item.netMovePct}%</span>
+            <span>run: ${item.maxRun}</span>
+            <span>changes: ${item.changes}</span>
+            <span>dominance: ${item.dominantShare}%</span>
+            <span>wick/body: ${item.avgWickRatio}</span>
+          </div>
+
+          ${warningBox}
+        `;
+        coinCards.appendChild(div);
+      });
     }
 
     async function loadOne(symbol){
@@ -1067,38 +857,26 @@
     async function refreshAll(){
       appStatus.textContent = "Loading...";
       try{
-        const [data, dom, polyRisk] = await Promise.all([
+        const [data, dom] = await Promise.all([
           Promise.all(SYMBOLS.map(loadOne)),
-          fetchDominanceData().catch(() => null),
-          fetchPolymarketRisk().catch(() => ({
-            source: "Polymarket",
-            level: "UNKNOWN",
-            cls: "caution",
-            score: 20,
-            reasons: ["ошибка Polymarket"],
-            matched: []
-          }))
+          fetchDominanceData().catch(() => null)
         ]);
 
-        const calRisk = fetchEconomicCalendarRiskNoKey();
-        const btc = data.find(x => x.symbol === "BTCUSDT");
+        const domRisk = computeDominanceEventRisk(dom);
+        const calRisk = computeCalendarEventRisk();
+        const mergedEventRisk = mergeEventRisk(domRisk, calRisk);
 
         data.forEach(x => {
-          x.local = localDecision(x);
-          x.btcAware = btc.symbol === x.symbol
-            ? { text:"—", cls:"caution", reason:"это сам BTC" }
-            : btcAwareDecision(btc, x);
+          x.technical = computeTechnicalChaos(x);
+          x.eventRisk = mergedEventRisk;
+          x.finalChaos = computeFinalChaos(x.technical, x.eventRisk);
+          x.gate = marketGate(x.finalChaos);
         });
 
-        const technical = computeTechnicalChaos(btc);
-        const dominanceRisk = computeDominanceRisk(dom);
-        const externalRisk = combineExternalEventRisk(polyRisk, calRisk);
-        const eventRisk = computeFinalEventRisk(dominanceRisk, externalRisk);
-        const finalChaos = computeFinalChaos(technical, eventRisk);
-        const gate = marketGate(finalChaos);
+        const overall = computeOverallMarketChaos(data);
 
-        renderTop(btc, data, dom, technical, eventRisk, finalChaos, gate);
-        renderCoins(data);
+        renderTop(data, dom, mergedEventRisk, overall);
+        renderCoinsIndependent(data);
 
         appStatus.textContent = `Updated ${new Date().toLocaleTimeString()} · window ${LOOKBACK}m`;
       } catch (e){
@@ -1122,7 +900,6 @@
     }
 
     refreshBtn.addEventListener("click", refreshAll);
-
     toggleBtn.addEventListener("click", () => {
       if (timer){
         stopAuto();
@@ -1131,7 +908,6 @@
         startAuto();
       }
     });
-
     intervalSelect.addEventListener("change", () => {
       if (timer) startAuto();
     });
